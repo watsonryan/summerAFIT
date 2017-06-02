@@ -195,6 +195,96 @@ static SharedNoiseModel readNoiseModel(ifstream& is, bool smart,
   }
 }
 
+
+
+/* ************************************************************************* */
+// Read noise parameters and interpret them according to flags
+static SharedNoiseModel readNoiseModelRobust(ifstream& is, bool smart,
+    NoiseFormat noiseFormat, KernelFunctionType kernelFunctionType,
+    double kerWidth) {
+  double v1, v2, v3, v4, v5, v6;
+  is >> v1 >> v2 >> v3 >> v4 >> v5 >> v6;
+
+   if (noiseFormat == NoiseFormatAUTO)
+   {
+     // Try to guess covariance matrix layout
+     if(v1 != 0.0 && v2 == 0.0 && v3 != 0.0 && v4 != 0.0 && v5 == 0.0 && v6 == 0.0)
+     {
+       // NoiseFormatGRAPH
+       noiseFormat = NoiseFormatGRAPH;
+     }
+     else if(v1 != 0.0 && v2 == 0.0 && v3 == 0.0 && v4 != 0.0 && v5 == 0.0 && v6 != 0.0)
+     {
+       // NoiseFormatCOV
+       noiseFormat = NoiseFormatCOV;
+     }
+     else
+     {
+       throw std::invalid_argument("load2D: unrecognized covariance matrix format in dataset file. Please specify the noise format.");
+     }
+  }
+
+  // Read matrix and check that diagonal entries are non-zero
+  Matrix M(3, 3);
+  switch (noiseFormat) {
+  case NoiseFormatG2O:
+  case NoiseFormatCOV:
+    // i.e., [ v1 v2 v3; v2' v4 v5; v3' v5' v6 ]
+    if (v1 == 0.0 || v4 == 0.0 || v6 == 0.0)
+      throw runtime_error(
+          "load2D::readNoiseModel looks like this is not G2O matrix order");
+    M << v1, v2, v3, v2, v4, v5, v3, v5, v6;
+    break;
+  case NoiseFormatTORO:
+  case NoiseFormatGRAPH:
+    // http://www.openslam.org/toro.html
+    // inf_ff inf_fs inf_ss inf_rr inf_fr inf_sr
+    // i.e., [ v1 v2 v5; v2' v3 v6; v5' v6' v4 ]
+    if (v1 == 0.0 || v3 == 0.0 || v4 == 0.0)
+      throw invalid_argument(
+          "load2D::readNoiseModel looks like this is not TORO matrix order");
+    M << v1, v2, v5, v2, v3, v6, v5, v6, v4;
+    break;
+  default:
+    throw runtime_error("load2D: invalid noise format");
+  }
+
+  // Now, create a Gaussian noise model
+  // The smart flag will try to detect a simpler model, e.g., unit
+  SharedNoiseModel model;
+  switch (noiseFormat) {
+  case NoiseFormatG2O:
+  case NoiseFormatTORO:
+    // In both cases, what is stored in file is the information matrix
+    model = noiseModel::Gaussian::Information(M, smart);
+    break;
+  case NoiseFormatGRAPH:
+  case NoiseFormatCOV:
+    // These cases expect covariance matrix
+    model = noiseModel::Gaussian::Covariance(M, smart);
+    break;
+  default:
+    throw invalid_argument("load2D: invalid noise format");
+  }
+
+  switch (kernelFunctionType) {
+  case KernelFunctionTypeNONE:
+    return model;
+    break;
+  case KernelFunctionTypeHUBER:
+    return noiseModel::Robust::Create(
+        noiseModel::mEstimator::Huber::Create(kerWidth), model);
+    break;
+  case KernelFunctionTypeTUKEY:
+    return noiseModel::Robust::Create(
+        noiseModel::mEstimator::Tukey::Create(kerWidth), model);
+    break;
+  default:
+    throw invalid_argument("load2D: invalid kernel function type");
+  }
+}
+
+
 /* ************************************************************************* */
 GraphAndValues load2D(const string& filename, SharedNoiseModel model, Key maxID,
     bool addNoise, bool smart, NoiseFormat noiseFormat,
@@ -351,6 +441,165 @@ GraphAndValues load2D(const string& filename, SharedNoiseModel model, Key maxID,
   return make_pair(graph, initial);
 }
 
+
+
+/* ************************************************************************* */
+GraphAndValues load2DRobust(const string& filename, SharedNoiseModel model, Key maxID,
+    bool addNoise, bool smart, NoiseFormat noiseFormat,
+    KernelFunctionType kernelFunctionType, double kerWidth) {
+
+  ifstream is(filename.c_str());
+  if (!is)
+    throw invalid_argument("load2D: can not find file " + filename);
+
+  Values::shared_ptr initial(new Values);
+  NonlinearFactorGraph::shared_ptr graph(new NonlinearFactorGraph);
+
+  string tag;
+
+  // load the poses
+  while (!is.eof()) {
+    if (!(is >> tag))
+      break;
+
+    if ((tag == "VERTEX2") || (tag == "VERTEX_SE2") || (tag == "VERTEX")) {
+      Key id;
+      double x, y, yaw;
+      is >> id >> x >> y >> yaw;
+
+      // optional filter
+      if (maxID && id >= maxID)
+        continue;
+
+      initial->insert(id, Pose2(x, y, yaw));
+    }
+    is.ignore(LINESIZE, '\n');
+  }
+  is.clear(); /* clears the end-of-file and error flags */
+  is.seekg(0, ios::beg);
+
+  // If asked, create a sampler with random number generator
+  Sampler sampler;
+  if (addNoise) {
+    noiseModel::Diagonal::shared_ptr noise;
+    if (model)
+      noise = boost::dynamic_pointer_cast<noiseModel::Diagonal>(model);
+    if (!noise)
+      throw invalid_argument(
+          "gtsam::load2D: invalid noise model for adding noise"
+              "(current version assumes diagonal noise model)!");
+    sampler = Sampler(noise);
+  }
+
+  // Parse the pose constraints
+  Key id1, id2;
+  bool haveLandmark = false;
+  const bool useModelInFile = !model;
+  while (!is.eof()) {
+    if (!(is >> tag))
+      break;
+
+    if ((tag == "EDGE2") || (tag == "EDGE") || (tag == "EDGE_SE2")
+        || (tag == "ODOMETRY")) {
+
+      // Read transform
+      double x, y, yaw;
+      is >> id1 >> id2 >> x >> y >> yaw;
+      Pose2 l1Xl2(x, y, yaw);
+
+      // read noise model
+      SharedNoiseModel modelInFile = readNoiseModelRobust(is, smart, noiseFormat,
+          kernelFunctionType, kerWidth);
+
+      // optional filter
+      if (maxID && (id1 >= maxID || id2 >= maxID))
+        continue;
+
+      if (useModelInFile)
+        model = modelInFile;
+
+      if (addNoise)
+        l1Xl2 = l1Xl2.retract(sampler.sample());
+
+      // Insert vertices if pure odometry file
+      if (!initial->exists(id1))
+        initial->insert(id1, Pose2());
+      if (!initial->exists(id2))
+        initial->insert(id2, initial->at<Pose2>(id1) * l1Xl2);
+
+      NonlinearFactor::shared_ptr factor(
+          new BetweenFactor<Pose2>(id1, id2, l1Xl2, model));
+      graph->push_back(factor);
+    }
+    // Parse measurements
+    double bearing, range, bearing_std, range_std;
+
+    // A bearing-range measurement
+    if (tag == "BR") {
+      is >> id1 >> id2 >> bearing >> range >> bearing_std >> range_std;
+    }
+
+    // A landmark measurement, TODO Frank says: don't know why is converted to bearing-range
+    if (tag == "LANDMARK") {
+      double lmx, lmy;
+      double v1, v2, v3;
+
+      is >> id1 >> id2 >> lmx >> lmy >> v1 >> v2 >> v3;
+
+      // Convert x,y to bearing,range
+      bearing = atan2(lmy, lmx);
+      range = sqrt(lmx * lmx + lmy * lmy);
+
+      // In our experience, the x-y covariance on landmark sightings is not very good, so assume
+      // it describes the uncertainty at a range of 10m, and convert that to bearing/range uncertainty.
+      if (std::abs(v1 - v3) < 1e-4) {
+        bearing_std = sqrt(v1 / 10.0);
+        range_std = sqrt(v1);
+      } else {
+        bearing_std = 1;
+        range_std = 1;
+        if (!haveLandmark) {
+          cout
+              << "Warning: load2D is a very simple dataset loader and is ignoring the\n"
+                  "non-uniform covariance on LANDMARK measurements in this file."
+              << endl;
+          haveLandmark = true;
+        }
+      }
+    }
+
+    // Do some common stuff for bearing-range measurements
+    if (tag == "LANDMARK" || tag == "BR") {
+
+      // optional filter
+      if (maxID && id1 >= maxID)
+        continue;
+
+      // Create noise model
+      noiseModel::Diagonal::shared_ptr measurementNoise =
+          noiseModel::Diagonal::Sigmas((Vector(2) << bearing_std, range_std).finished());
+
+      // Add to graph
+      *graph += BearingRangeFactor<Pose2, Point2>(id1, L(id2), bearing, range,
+          measurementNoise);
+
+      // Insert poses or points if they do not exist yet
+      if (!initial->exists(id1))
+        initial->insert(id1, Pose2());
+      if (!initial->exists(L(id2))) {
+        Pose2 pose = initial->at<Pose2>(id1);
+        Point2 local(cos(bearing) * range, sin(bearing) * range);
+        Point2 global = pose.transform_from(local);
+        initial->insert(L(id2), global);
+      }
+    }
+    is.ignore(LINESIZE, '\n');
+  }
+
+  return make_pair(graph, initial);
+}
+
+
 /* ************************************************************************* */
 GraphAndValues load2D_robust(const string& filename,
     noiseModel::Base::shared_ptr& model, int maxID) {
@@ -403,6 +652,20 @@ GraphAndValues readG2o(const string& g2oFile, const bool is3D,
 
   return load2D(g2oFile, SharedNoiseModel(), maxID, addNoise, smart,
       NoiseFormatG2O, kernelFunctionType);
+}
+
+GraphAndValues readG2oRobust(const string& g2oFile, const bool is3D,
+    KernelFunctionType kernelFunctionType, double kerWidth) {
+  // just call load2D
+  int maxID = 0;
+  bool addNoise = false;
+  bool smart = true;
+
+  if(is3D)
+    return load3D(g2oFile);
+
+  return load2DRobust(g2oFile, SharedNoiseModel(), maxID, addNoise, smart,
+      NoiseFormatG2O, kernelFunctionType, kerWidth );
 }
 
 /* ************************************************************************* */

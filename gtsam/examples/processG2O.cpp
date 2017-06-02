@@ -31,8 +31,7 @@ namespace po = boost::program_options;
 
 int main(const int argc, const char *argv[]) {
 
-  double kerWidth;
-  string g2oFile, outputFile, kernelType("none");
+  string g2oFile, outputFile, kernelType("none"), kerWidth("none");
   const string green("\033[0;32m"), red("\033[0;31m");
 
   po::options_description desc("Available options");
@@ -42,7 +41,7 @@ int main(const int argc, const char *argv[]) {
    "Input GNSS data file")
   ("kernel,k", po::value<string>(&kernelType)->default_value("none"),
   "define the robust cost function (e.g., Huber, Tukey, Cauchy ... ).")
-  ("kerWidth,w", po::value<double>(&kerWidth)->default_value(1),
+  ("kerWidth,w", po::value<string>(&kerWidth)->default_value("none"),
   "define the robust cost function (e.g., Huber, Tukey, Cauchy ... ).")
   ("output,o", po::value<string>(&outputFile)->default_value(""), 
    "Input INS data file")
@@ -66,10 +65,12 @@ int main(const int argc, const char *argv[]) {
     boost::tie(graph, initial) = readG2o(g2oFile,is3D);
   }
   if(kernelType.compare("huber") == 0){
-    boost::tie(graph, initial) = readG2o(g2oFile,is3D, KernelFunctionTypeHUBER);
+    boost::tie(graph, initial) = readG2oRobust(g2oFile,is3D, 
+      KernelFunctionTypeHUBER, atof(kerWidth.c_str()));
   }
   if(kernelType.compare("tukey") == 0){
-    boost::tie(graph, initial) = readG2o(g2oFile,is3D, KernelFunctionTypeTUKEY);
+    boost::tie(graph, initial) = readG2oRobust(g2oFile,is3D,
+      KernelFunctionTypeTUKEY, atof(kerWidth.c_str()));
   }
 
   NonlinearFactorGraph graphWithPrior = *graph;
@@ -78,7 +79,7 @@ int main(const int argc, const char *argv[]) {
   graphWithPrior.add(PriorFactor<Pose2>(0, Pose2(), priorModel));
   Values result = GaussNewtonOptimizer(graphWithPrior, *initial).optimize();  
 
-  std::cout << "final_error= " <<graph->error(result)<< std::endl;
+  cout <<graph->error(result)<<endl;
 
   return 0;
 }
