@@ -275,6 +275,22 @@ static SharedNoiseModel readNoiseModelRobust(ifstream& is, bool smart,
     return noiseModel::Robust::Create(
         noiseModel::mEstimator::Huber::Create(kerWidth), model);
     break;
+  case KernelFunctionTypeCAUCHY:
+    return noiseModel::Robust::Create(
+        noiseModel::mEstimator::Cauchy::Create(kerWidth), model);
+    break;
+  case KernelFunctionTypeWELSH:
+    return noiseModel::Robust::Create(
+        noiseModel::mEstimator::Welsh::Create(kerWidth), model);
+    break;
+  case KernelFunctionTypeGEMANMCCLURE:
+    return noiseModel::Robust::Create(
+        noiseModel::mEstimator::GemanMcClure::Create(kerWidth), model);
+    break;
+  case KernelFunctionTypeDCS:
+    return noiseModel::Robust::Create(
+        noiseModel::mEstimator::DCS::Create(kerWidth), model);
+    break;
   case KernelFunctionTypeTUKEY:
     return noiseModel::Robust::Create(
         noiseModel::mEstimator::Tukey::Create(kerWidth), model);

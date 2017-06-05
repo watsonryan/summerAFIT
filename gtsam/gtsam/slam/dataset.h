@@ -68,7 +68,9 @@ enum NoiseFormat {
 
 /// Robust kernel type to wrap around quadratic noise model
 enum KernelFunctionType {
-  KernelFunctionTypeNONE, KernelFunctionTypeHUBER, KernelFunctionTypeTUKEY
+  KernelFunctionTypeNONE, KernelFunctionTypeHUBER, KernelFunctionTypeTUKEY,
+  KernelFunctionTypeCAUCHY, KernelFunctionTypeWELSH, KernelFunctionTypeGEMANMCCLURE,
+  KernelFunctionTypeDCS
 };
 
 /// Return type for load functions
