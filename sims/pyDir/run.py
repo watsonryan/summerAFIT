@@ -8,8 +8,12 @@ m-estimator kernel width.
 __author__ = 'ryan'
 __email__ = "rwatso12@gmail.com"
 
-import os, glob, subprocess, progressbar, argparse
+
+import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+import os, glob, subprocess, progressbar, argparse
+
 
 # Add command line interface
 parser = argparse.ArgumentParser(description="Simple script to test the "
@@ -26,7 +30,7 @@ parser.add_argument('-s', '--script', dest='script',
                     help="What's the GTSAM script used to process the graph")
 parser.add_argument('-k', '--kernel', dest='kernel', default='huber',
                      help="define the kernel to be used")
-parser.add_argument('--maxWidth', dest='maxWidth', default=10, type=int,
+parser.add_argument('--maxWidth', dest='maxWidth', default=3, type=int,
                     help="What's the maximum kernel width you would like to test?")
 parser.add_argument('--kerInc', dest='kernelIncrement', default=0.1, type=float,
                     help="What's the kernel increment for testing sensivity?")
@@ -49,7 +53,6 @@ for k in progress(list(xrange(1, int(args.maxWidth/args.kernelIncrement)))):
     index.append( float(kernelWidth) )    
     totalError.append( out )
 
-plt.xkcd() 
 plt.plot(index, totalError, 'k',label=args.kernel, linewidth=3.0)
 plt.ylabel('Final Graph Error')
 plt.xlabel('Kernel Width')
@@ -57,7 +60,7 @@ plt.grid()
 font = { 'size'  : 22}
 plt.rc('font', **font)
 plt.legend()
-plt.show(block = False)
+plt.show()
 
 if (args.saveGraph):
     plt.savefig(args.kernel+".eps", format="eps", close=False, verbose=True)
@@ -66,3 +69,4 @@ if (args.output):
     for line in zip(map(str,index),totalError):
         f.write(' '.join(line)+'\n')
     f.close()
+

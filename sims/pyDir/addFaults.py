@@ -1,21 +1,57 @@
-#!/usr/bin/env python 
+#!/usr/bin/python
 
-'''
-Modification of Niko Suenderhauf's code.
-
-This is used to add false constraints to a pose graph. These faults can be 
-added to the the pose-graph randomly or in local clusters.
-'''
-
-__author__ = 'ryan'
-__email__ = "rwatso12@gmail.com"
+# This is part of the Vertigo suite.
+# Niko Suenderhauf
+# Chemnitz University of Technology
+# niko@etit.tu-chemnitz.de
 
 
-import sys, random
-from math import *
 from optparse import OptionParser
+import sys
+import random
+from math import *
 
 
+# =================================================================
+def checkOptions(options):
+    """Make sure the options entered by the user make sense."""
+
+    if options.outliers<0:
+        print "Number of outliers (--outliers) must be >=0."
+        return False
+    
+
+    if options.groupsize<0:
+        print "Groupsize (--groupsize) must be >=0."
+        return False
+
+    if options.switchCov<=0.0:
+        print "Switch covariance (--switchCov) must be >0."
+        return False
+
+    if options.switchable and options.maxmix:
+        print "Please specify only one of --switchable or --maxmix."
+        return False
+
+    if options.filename == "" or options.filename==None:
+        print "Dataset to read (--in) must be given."
+        return False
+
+    if options.information == "":
+        options.information=None
+    
+    
+    if options.information:
+        if (options.information.count(",") != 0) and (options.information.count(",") != 5) and  (options.information.count(",") != 20):
+            print "Information matrix must be given in full upper-triangular form. E.g. --information=42,0,0,42,0,42 or as a single value that is used for all diagonal entries, e.g. --information=42."
+            return False
+    
+
+
+    return True
+    
+    
+# =================================================================
 def readDataset(filename, vertexStr='VERTEX_SE2', edgeStr='EDGE_SE2'):
 
     # read the complete file
@@ -41,6 +77,9 @@ def readDataset(filename, vertexStr='VERTEX_SE2', edgeStr='EDGE_SE2'):
     elif mode == 3:
         vertexStr='VERTEX_SE3:QUAT'
         edgeStr='EDGE_SE3:QUAT'
+       
+        
+
 
     # build a dictionary of vertices and edges
     v=[]
@@ -314,46 +353,6 @@ def writeDataset(filename, vertices, edges, mode, outliers=0, switchPrior=1, swi
 
     return True
 
-
-# =================================================================
-def checkOptions(options):
-    """Make sure the options entered by the user make sense."""
-
-    if options.outliers<0:
-        print "Number of outliers (--outliers) must be >=0."
-        return False
-    
-
-    if options.groupsize<0:
-        print "Groupsize (--groupsize) must be >=0."
-        return False
-
-    if options.switchCov<=0.0:
-        print "Switch covariance (--switchCov) must be >0."
-        return False
-
-    if options.switchable and options.maxmix:
-        print "Please specify only one of --switchable or --maxmix."
-        return False
-
-    if options.filename == "" or options.filename==None:
-        print "Dataset to read (--in) must be given."
-        return False
-
-    if options.information == "":
-        options.information=None
-    
-    
-    if options.information:
-        if (options.information.count(",") != 0) and (options.information.count(",") != 5) and  (options.information.count(",") != 20):
-            print "Information matrix must be given in full upper-triangular form. E.g. --information=42,0,0,42,0,42 or as a single value that is used for all diagonal entries, e.g. --information=42."
-            return False
-    
-
-
-    return True
-
-
 # ==================================================================    
 # ==================================================================
 # ==================================================================
@@ -420,3 +419,7 @@ if __name__ == "__main__":
     else: 
         print
         print "Please use --help to see all available command line parameters."
+
+
+    
+

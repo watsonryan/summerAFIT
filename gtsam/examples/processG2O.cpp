@@ -72,6 +72,22 @@ int main(const int argc, const char *argv[]) {
     boost::tie(graph, initial) = readG2oRobust(g2oFile,is3D,
       KernelFunctionTypeTUKEY, atof(kerWidth.c_str()));
   }
+  if(kernelType.compare("gemanmcclure") == 0){
+    boost::tie(graph, initial) = readG2oRobust(g2oFile,is3D,
+      KernelFunctionTypeGEMANMCCLURE, atof(kerWidth.c_str()));
+  }
+  if(kernelType.compare("dcs") == 0){
+    boost::tie(graph, initial) = readG2oRobust(g2oFile,is3D,
+      KernelFunctionTypeDCS, atof(kerWidth.c_str()));
+  }
+  if(kernelType.compare("cauchy") == 0){
+    boost::tie(graph, initial) = readG2oRobust(g2oFile,is3D,
+      KernelFunctionTypeCAUCHY, atof(kerWidth.c_str()));
+  }
+  if(kernelType.compare("welsh") == 0){
+    boost::tie(graph, initial) = readG2oRobust(g2oFile,is3D,
+      KernelFunctionTypeWELSH, atof(kerWidth.c_str()));
+  }
 
   NonlinearFactorGraph graphWithPrior = *graph;
   noiseModel::Diagonal::shared_ptr priorModel = //
