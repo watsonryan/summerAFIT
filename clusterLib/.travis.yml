@@ -1,0 +1,28 @@
+language: cpp
+sudo: required
+
+addons:
+    apt:
+        packages:
+            - cmake
+            - libeigen3-dev
+            - libboost-all-dev
+            - libboost-python-dev
+            - python-numpy
+
+install:
+    - cd $TRAVIS_BUILD_DIR
+    - mkdir build
+    - cd build
+    - cmake -DBUILD_PYTHON_INTERFACE=ON -DBUILD_USE_PYTHON3=OFF ..
+    - make
+    - sudo make install
+
+script:
+    - cd $TRAVIS_BUILD_DIR/build
+    - ./cluster_test
+    - ./scluster_test
+    - ./mcluster_test
+    - sudo ldconfig
+    - cd ../python
+    - ./testapi.py
