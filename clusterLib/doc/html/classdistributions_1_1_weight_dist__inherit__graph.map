@@ -1,0 +1,5 @@
+<map id="distributions::WeightDist" name="distributions::WeightDist">
+<area shape="rect" id="node2" href="$classdistributions_1_1_dirichlet.html" title="Dirichlet parameter distribution. " alt="" coords="5,80,165,107"/>
+<area shape="rect" id="node3" href="$classdistributions_1_1_stick_break.html" title="Stick&#45;Breaking (Dirichlet Process) parameter distribution. " alt="" coords="189,80,365,107"/>
+<area shape="rect" id="node4" href="$classdistributions_1_1_g_dirichlet.html" title="Generalised Dirichlet parameter distribution (truncated stick breaking). " alt="" coords="192,155,363,181"/>
+</map>

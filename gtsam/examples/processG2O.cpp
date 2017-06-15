@@ -95,7 +95,9 @@ int main(const int argc, const char *argv[]) {
   graphWithPrior.add(PriorFactor<Pose2>(0, Pose2(), priorModel));
   Values result = GaussNewtonOptimizer(graphWithPrior, *initial).optimize();  
 
-  cout <<graph->error(result)<<endl;
+//  cout <<graph->error(result)<<endl;
+
+    graph->printErrors(result);
 
   return 0;
 }

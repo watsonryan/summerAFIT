@@ -14,7 +14,7 @@ color_iter = itertools.cycle(['navy', 'c', 'cornflowerblue', 'gold',
 
 def plot_results(X, Y_, means, covariances, index, title):
 
-    splot = plt.subplot(1, 1, 1 + index)
+    splot = plt.subplot(1, 2, 1 + index)
     for i, (mean, covar, color) in enumerate(zip(
             means, covariances, color_iter)):
 
@@ -43,7 +43,8 @@ def plot_results(X, Y_, means, covariances, index, title):
 
 # Number of samples per component
 n_true = 5000
-n_false = 5000
+n_false = 50
+num_points = n_true+n_false
 
 # Generate random sample, two components
 np.random.seed(0)
@@ -65,16 +66,17 @@ plt.title('True Distribution')
 
 
 # Fit a Gaussian mixture with EM
-gmm = mixture.GaussianMixture(n_components=2, covariance_type='full').fit(X)
-plot_results(X, gmm.predict(X), gmm.means_, gmm.covariances_, 0,
-             'Gaussian Mixture')
+#gmm = mixture.GaussianMixture(n_components=100, covariance_type='full').fit(X)
+#plot_results(X, gmm.predict(X), gmm.means_, gmm.covariances_, 0,
+#             'Gaussian Mixture')
 
 
 # Fit a Dirichlet process Gaussian mixture
-dpgmm = mixture.BayesianGaussianMixture(n_components=2,
-                                        covariance_type='full').fit(X)
+dpgmm = mixture.BayesianGaussianMixture( n_components=num_points, 
+                                         covariance_type='full' ).fit(X)
 plot_results(X, dpgmm.predict(X), dpgmm.means_, dpgmm.covariances_, 1,
              'Bayesian Gaussian Mixture with a Dirichlet process prior')
+
 
 plt.show()
 

@@ -1,0 +1,7 @@
+\form#0:$ Beta(\alpha_1,\alpha_2) $
+\form#1:$ \alpha_1 $
+\form#2:$ \alpha_2 $
+\form#3:$ clustwidth \times D \times \mathbf{I}_D $
+\form#4:$ clustwidth \times \mathbf{I}_D $
+\form#5:\[ Cov(X) = \frac{1} {N-1} (X-E[X])^T (X-E[X]) \]
+\form#6:\[ Cov(X) = \frac{1} {\sum_j N_j-1} \sum_j (X_j-E[X])^T (X_j-E[X]) \]

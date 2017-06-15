@@ -1,0 +1,89 @@
+#!/usr/bin/env python 
+
+'''
+Simple script to test the sensitivity of pose-graph optimization to 
+m-estimator kernel width.
+'''
+
+__author__ = 'ryan'
+__email__ = "rwatso12@gmail.com"
+
+
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+import os, glob, subprocess, progressbar, argparse
+
+
+# Add command line interface
+parser = argparse.ArgumentParser(description="Simple script to test the "
+                                "sensitivity of pose-graph optimization to"   
+                                "m-estimator kernel width")
+
+parser.add_argument('-i', '--inputFile', dest='input', 
+                   default='../../poseGraphs/manhattanOlson3500.g2o', 
+                   help="Define the input pose graph")
+parser.add_argument('-o', '--outFile', dest='output', 
+                    help="Define the output file")
+parser.add_argument('-s', '--script', dest='script', 
+                    default='./../../gtsam/build/examples/processG2O', 
+                    help="What's the GTSAM script used to process the graph")
+parser.add_argument('-k', '--kernel', dest='kernel', default='huber',
+                     help="define the kernel to be used")
+parser.add_argument('--maxWidth', dest='maxWidth', default=3, type=int,
+                    help="What's the maximum kernel width you would like to test?")
+parser.add_argument('--kerInc', dest='kernelIncrement', default=0.1, type=float,
+                    help="What's the kernel increment for testing sensivity?")
+parser.add_argument('--saveGraph',action='store_true', 
+                    help="would you like to save the graph to the cur. dir.?")
+args = parser.parse_args()
+
+index = []
+totalError = []
+faults = []
+
+progress = progressbar.ProgressBar()
+print('\n\n')
+for k in progress(list(xrange(1, int(args.maxWidth/args.kernelIncrement)))):
+
+    for filename in sorted(glob.glob('../../poseGraphs/man35Faulty/*')):
+        kernelWidth = str(float(k)*args.kernelIncrement)
+        faults.append( ''.join(filename.rsplit('.')[-2].rsplit('/')[-1]) )
+        cmd = [args.script, '-i', filename, '-k', args.kernel, '-w', kernelWidth]
+        proc1 = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = proc1.communicate()        
+        index.append( float(kernelWidth) )    
+        totalError.append( out )
+
+#plt.plot(faults, totalError, 'k',label=args.kernel, linewidth=3.0)
+#plt.ylabel('Final Graph Error')
+#plt.xlabel('Kernel Width')
+#plt.grid()
+#font = { 'size'  : 22}
+#plt.rc('font', **font)
+#plt.legend()
+#plt.show()
+
+
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+X, Y = np.meshgrid( np.asarray(map(float,index)), np.asarray(map(float,faults)) )
+Z = (np.asarray(map(float,totalError)))
+
+ax.plot_surface(X, Y, Z)
+
+ax.set_xlabel('Kernel Width')
+ax.set_ylabel('# Faults')
+ax.set_zlabel(args.kernel)
+
+plt.show()
+
+
+#if (args.saveGraph):
+#    plt.savefig(args.kernel+".eps", format="eps", close=False, verbose=True)
+if (args.output):
+    f=open(args.output,'w')
+    for line in zip(map(str,index), faults, totalError):
+        f.write(' '.join(line)+'\n')
+    f.close()
+
