@@ -30,21 +30,26 @@ def main():
 
     # Data parameters
     D = 2           # dimensions
-    N = 500         # number of points to generate
     K_true = 2      # the true number of components
 
     # Model parameters
     alpha = 1.
     K = 1           # initial number of components
-    n_iter = 20
+    n_iter = 10
 
     # Generate data
-    mu_scale = 3.0
-    covar_scale = 0.1
-    z_true = np.random.randint(0, K_true, N)
-    mu = np.random.randn(D, K_true)*mu_scale
-    X = mu[:, z_true] + np.random.randn(D, N)*covar_scale
-    X = X.T
+    mu_scale = 1.
+    covar_scale = 1.
+
+    n_true = 100
+    n_false = 100
+    num_points = n_true+n_false
+
+    # Generate random sample, two components
+    np.random.seed(0)
+    C = np.array([[0.1, 1.5], [0.3,2.3]])
+    Data = np.r_[np.dot(np.random.randn(n_false, 2), C) + np.array([1,2]),
+              .7 * np.random.randn(n_true, 2)]
 
     # Intialize prior
     m_0 = np.zeros(D)
@@ -54,8 +59,8 @@ def main():
     prior = NIW(m_0, k_0, v_0, S_0)
 
     # Setup IGMM
-    igmm = IGMM(X, prior, alpha, assignments="rand", K=K)
-    # igmm = IGMM(X, prior, alpha, assignments="one-by-one", K=K)
+#    igmm = IGMM(Data, prior, alpha, assignments="rand", K=K)
+    igmm = IGMM(Data, prior, alpha, assignments="one-by-one", K=K)
 
     # Perform Gibbs sampling
     record = igmm.gibbs_sample(n_iter)
@@ -66,8 +71,11 @@ def main():
     plot_mixture_model(ax, igmm)
     for k in xrange(igmm.components.K):
         mu, sigma = igmm.components.rand_k(k)
-        plot_ellipse(ax, mu, sigma)
+        plot_ellipse(ax, mu, sigma*3)
+    plt.xticks(())
+    plt.yticks(())
     plt.show()
+
 
 
 
