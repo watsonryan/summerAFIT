@@ -11,32 +11,33 @@
 /**
  * @file dataset.cpp
  * @date Jan 22, 2010
- * @author nikai, Luca Carlone
+ * @author nikai, Luca Carlone, Ryan
  * @brief utility functions for loading datasets
  */
 
-#include <gtsam/sam/BearingRangeFactor.h>
-#include <gtsam/slam/BetweenFactor.h>
-#include <gtsam/slam/dataset.h>
-#include <gtsam/geometry/Point3.h>
-#include <gtsam/geometry/Pose2.h>
-#include <gtsam/geometry/Rot3.h>
-#include <gtsam/inference/FactorGraph.h>
-#include <gtsam/inference/Symbol.h>
-#include <gtsam/nonlinear/NonlinearFactor.h>
-#include <gtsam/nonlinear/Values.h>
-#include <gtsam/nonlinear/Values-inl.h>
-#include <gtsam/linear/Sampler.h>
-#include <gtsam/base/GenericValue.h>
 #include <gtsam/base/Lie.h>
-#include <gtsam/base/Matrix.h>
 #include <gtsam/base/types.h>
 #include <gtsam/base/Value.h>
+#include <gtsam/base/Matrix.h>
 #include <gtsam/base/Vector.h>
-
-#include <boost/assign/list_inserter.hpp>
-#include <boost/filesystem/operations.hpp>
+#include <gtsam/slam/dataset.h>
+#include <gtsam/geometry/Rot3.h>
+#include <gtsam/geometry/Pose2.h>
+#include <gtsam/linear/Sampler.h>
+#include <gtsam/geometry/Point3.h>
+#include <gtsam/inference/Symbol.h>
+#include <gtsam/nonlinear/Values.h>
+#include <gtsam/base/GenericValue.h>
 #include <boost/filesystem/path.hpp>
+#include <gtsam/slam/BetweenFactor.h>
+#include <gtsam/nonlinear/Values-inl.h>
+#include <gtsam/inference/FactorGraph.h>
+#include <boost/assign/list_inserter.hpp>
+#include <gtsam/sam/BearingRangeFactor.h>
+#include <boost/filesystem/operations.hpp>
+#include <gtsam/nonlinear/NonlinearFactor.h>
+#include <gtsam/robustModels/BetweenFactorMaxMix.h>
+
 
 #include <cmath>
 #include <fstream>
@@ -457,6 +458,102 @@ GraphAndValues load2D(const string& filename, SharedNoiseModel model, Key maxID,
   return make_pair(graph, initial);
 }
 
+
+
+
+///* ************************************************************************* */
+//GraphAndValues load2DMix(const string& filename, SharedNoiseModel hyp,
+//    SharedNoiseModel null, Key maxID, bool addNoise, bool smart, 
+//    NoiseFormat noiseFormat) {
+
+//  ifstream is(filename.c_str());
+//  if (!is)
+//    throw invalid_argument("load2D: can not find file " + filename);
+
+//  Values::shared_ptr initial(new Values);
+//  NonlinearFactorGraph::shared_ptr graph(new NonlinearFactorGraph);
+
+//  string tag;
+
+//  // load the poses
+//  while (!is.eof()) {
+//    if (!(is >> tag))
+//      break;
+
+//    if ((tag == "VERTEX2") || (tag == "VERTEX_SE2") || (tag == "VERTEX")) {
+//      Key id;
+//      double x, y, yaw;
+//      is >> id >> x >> y >> yaw;
+
+//      // optional filter
+//      if (maxID && id >= maxID)
+//        continue;
+
+//      initial->insert(id, Pose2(x, y, yaw));
+//    }
+//    is.ignore(LINESIZE, '\n');
+//  }
+//  is.clear(); /* clears the end-of-file and error flags */
+//  is.seekg(0, ios::beg);
+
+//  // If asked, create a sampler with random number generator
+//  Sampler sampler;
+//  if (addNoise) {
+//    noiseModel::Diagonal::shared_ptr noise;
+//    if (model)
+//      noise = boost::dynamic_pointer_cast<noiseModel::Diagonal>(model);
+//    if (!noise)
+//      throw invalid_argument(
+//          "gtsam::load2D: invalid noise model for adding noise"
+//              "(current version assumes diagonal noise model)!");
+//    sampler = Sampler(noise);
+//  }
+
+//  // Parse the pose constraints
+//  Key id1, id2;
+//  bool haveLandmark = false;
+//  const bool useModelInFile = !model;
+//  while (!is.eof()) {
+//    if (!(is >> tag))
+//      break;
+
+//    if ((tag == "EDGE2") || (tag == "EDGE") || (tag == "EDGE_SE2")
+//        || (tag == "ODOMETRY")) {
+
+//      // Read transform
+//      double x, y, yaw;
+//      is >> id1 >> id2 >> x >> y >> yaw;
+//      Pose2 l1Xl2(x, y, yaw);
+
+//      // read noise model
+//      SharedNoiseModel modelInFile = readNoiseModel(is, smart, noiseFormat,
+//          kernelFunctionType);
+
+//      // optional filter
+//      if (maxID && (id1 >= maxID || id2 >= maxID))
+//        continue;
+
+//      if (useModelInFile)
+//        model = modelInFile;
+
+//      if (addNoise)
+//        l1Xl2 = l1Xl2.retract(sampler.sample());
+
+//      // Insert vertices if pure odometry file
+//      if (!initial->exists(id1))
+//        initial->insert(id1, Pose2());
+//      if (!initial->exists(id2))
+//        initial->insert(id2, initial->at<Pose2>(id1) * l1Xl2);
+
+//      NonlinearFactor::shared_ptr factor(
+//          new BetweenFactor<Pose2>(id1, id2, l1Xl2, model));
+//      graph->push_back(factor);
+//    }
+//    is.ignore(LINESIZE, '\n');
+//  }
+
+//  return make_pair(graph, initial);
+//}
 
 
 /* ************************************************************************* */

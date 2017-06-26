@@ -12,7 +12,7 @@
 /**
  * @file dataset.h
  * @date Jan 22, 2010
- * @author nikai, Luca Carlone
+ * @author nikai, Luca Carlone, Ryan
  * @brief utility functions for loading datasets
  */
 
@@ -70,7 +70,7 @@ enum NoiseFormat {
 enum KernelFunctionType {
   KernelFunctionTypeNONE, KernelFunctionTypeHUBER, KernelFunctionTypeTUKEY,
   KernelFunctionTypeCAUCHY, KernelFunctionTypeWELSH, KernelFunctionTypeGEMANMCCLURE,
-  KernelFunctionTypeDCS
+  KernelFunctionTypeDCS, KernelFunctionTypeMAXMIX
 };
 
 /// Return type for load functions
@@ -145,6 +145,16 @@ GTSAM_EXPORT GraphAndValues readG2oRobust(const std::string& g2oFile,
     const bool is3D = false, 
     KernelFunctionType kernelFunctionType = KernelFunctionTypeNONE, 
     double kerWidth = 1);
+
+
+/**
+ * @brief This function parses a g2o file and stores the measurements into a 
+ * NonlinearFactorGraph. The meas. models utilized is max-mix
+ * @param filename The name of the g2o file\
+ */
+GTSAM_EXPORT GraphAndValues readG2oMaxMix( const std::string& g2oFile,
+    const bool is3D = false );
+
 
 /**
  * @brief This function writes a g2o file from
