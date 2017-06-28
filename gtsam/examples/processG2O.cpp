@@ -95,7 +95,7 @@ int main(const int argc, const char *argv[]) {
   Values result = GaussNewtonOptimizer(graphWithPrior, *initial).optimize();  
 
   cout <<graph->error(result)<<endl;
-  graph->printErrors(result);
+//  graph->printErrors(result);
 
   return 0;
 }

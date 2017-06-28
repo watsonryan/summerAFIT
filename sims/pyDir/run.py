@@ -62,11 +62,10 @@ plt.rc('font', **font)
 plt.legend()
 plt.show()
 
-if (args.saveGraph):
-    plt.savefig(args.kernel+".eps", format="eps", close=False, verbose=True)
 if (args.output):
     f=open(args.output,'w')
     for line in zip(map(str,index),totalError):
         f.write(' '.join(line)+'\n')
     f.close()
-
+if (args.saveGraph):
+    plt.savefig(args.kernel+".eps", format="eps", close=False, verbose=True)
