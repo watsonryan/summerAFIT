@@ -29,6 +29,29 @@ using namespace gtsam;
 using namespace boost;
 namespace po = boost::program_options;
 
+#ifndef FOREACH_HPP
+  #define FOREACH_HPP
+  #include <boost/foreach.hpp>
+  #define foreach BOOST_FOREACH
+#endif
+
+#include "boost/foreach.hpp"
+
+#define foreach BOOST_FOREACH
+
+
+double median(vector<double> medi) {
+	int size = medi.size();
+	double tmedian;
+	if (size % 2 == 0) { // even
+		tmedian = (medi[medi.size() / 2 - 1] + medi[medi.size() / 2]) / 2;
+	}
+
+	else //odd
+		tmedian = medi[medi.size() / 2];
+	return (tmedian);
+}
+
 int main(const int argc, const char *argv[]) {
 
   string g2oFile, outputFile, kernelType("none"), kerWidth("none");
@@ -94,8 +117,32 @@ int main(const int argc, const char *argv[]) {
   graphWithPrior.add(PriorFactor<Pose2>(0, Pose2(), priorModel));
   Values result = GaussNewtonOptimizer(graphWithPrior, *initial).optimize();  
 
-  cout <<graph->error(result)<<endl;
+//  cout <<graph->error(result)<<endl;
 //  graph->printErrors(result);
+
+	vector<Pose2> finalPose, initPose;
+	Values::ConstFiltered<Pose2> result_poses = result.filter<Pose2>();
+	foreach (const Values::ConstFiltered<Pose2>::KeyValuePair& key_value, result_poses) {
+    Pose2 q = key_value.value;
+    finalPose.push_back(q);
+		}
+
+
+	Values::ConstFiltered<Pose2> init_poses = initial->filter<Pose2>();
+	foreach (const Values::ConstFiltered<Pose2>::KeyValuePair& key_value, init_poses) {
+    Pose2 q = key_value.value;
+    initPose.push_back(q);
+  }
+
+  vector<double> rss;
+  for(unsigned int i = 0; i < initPose.size(); i++ ) {
+    Point2 err = initPose[i].translation() - finalPose[i].translation();
+    double e = sqrt( pow( err.x(),2) + pow(err.y(),2) ); 
+    rss.push_back( e );
+  }
+
+  double med = median(rss);
+  cout << med << endl;
 
   return 0;
 }

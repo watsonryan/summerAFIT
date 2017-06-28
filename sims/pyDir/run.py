@@ -45,7 +45,7 @@ progress = progressbar.ProgressBar()
 print('\n\n')
 for k in progress(list(xrange(1, int(args.maxWidth/args.kernelIncrement)))):
 
-    kernelWidth = str(float(k)*args.kernelIncrement)
+    kernelWidth = str(1 + float(k)*args.kernelIncrement)
     cmd = [args.script, '-i', args.input, '-k', args.kernel, '-w', kernelWidth]
 
     proc1 = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
