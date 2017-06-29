@@ -54,7 +54,7 @@ double median(vector<double> medi) {
 
 int main(const int argc, const char *argv[]) {
 
-  string g2oFile, outputFile, kernelType("none"), kerWidth("none");
+  string g2oFile, outputFile, kernelType("none"), kerWidth("none"), truePose;
   const string green("\033[0;32m"), red("\033[0;31m");
 
   po::options_description desc("Available options");
@@ -62,6 +62,8 @@ int main(const int argc, const char *argv[]) {
   ("help,h", "Print help message")
   ("input,i", po::value<string>(&g2oFile)->default_value(""), 
    "Input GNSS data file")
+  ("trueGraph,t", po::value<string>(&truePose)->default_value(""), 
+   "Input true pose graph for RMS comp.")
   ("kernel,k", po::value<string>(&kernelType)->default_value("none"),
   "define the robust cost function (e.g., Huber, Tukey, Cauchy ... ).")
   ("kerWidth,w", po::value<string>(&kerWidth)->default_value("none"),
@@ -78,6 +80,7 @@ int main(const int argc, const char *argv[]) {
              << "\n\n" << green << desc << endl;
         exit(1);
     }
+
 
   // reading file and creating factor graph
   NonlinearFactorGraph::shared_ptr graph;
@@ -111,6 +114,7 @@ int main(const int argc, const char *argv[]) {
       KernelFunctionTypeWELSH, atof(kerWidth.c_str()));
   }
 
+
   NonlinearFactorGraph graphWithPrior = *graph;
   noiseModel::Diagonal::shared_ptr priorModel = //
       noiseModel::Diagonal::Variances(Vector3(1e-6, 1e-6, 1e-8));
@@ -125,8 +129,10 @@ int main(const int argc, const char *argv[]) {
 	foreach (const Values::ConstFiltered<Pose2>::KeyValuePair& key_value, result_poses) {
     Pose2 q = key_value.value;
     finalPose.push_back(q);
+    cout << q.x() << " " << q.y() << endl;
 		}
 
+  if ( !truePose.empty() ) { boost::tie(graph, initial) = readG2o(truePose,is3D); }
 
 	Values::ConstFiltered<Pose2> init_poses = initial->filter<Pose2>();
 	foreach (const Values::ConstFiltered<Pose2>::KeyValuePair& key_value, init_poses) {

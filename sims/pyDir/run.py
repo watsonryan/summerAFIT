@@ -23,6 +23,9 @@ parser = argparse.ArgumentParser(description="Simple script to test the "
 parser.add_argument('-i', '--inputFile', dest='input', 
                    default='../../poseGraphs/manhattanOlson3500.g2o', 
                    help="Define the input pose graph")
+parser.add_argument('-t', '--truePose', dest='true', 
+                   default='', 
+                   help="Define the true pose graph")
 parser.add_argument('-o', '--outFile', dest='output', 
                     help="Define the output file")
 parser.add_argument('-s', '--script', dest='script', 
@@ -46,7 +49,11 @@ print('\n\n')
 for k in progress(list(xrange(1, int(args.maxWidth/args.kernelIncrement)))):
 
     kernelWidth = str(1 + float(k)*args.kernelIncrement)
-    cmd = [args.script, '-i', args.input, '-k', args.kernel, '-w', kernelWidth]
+
+    if args.true :
+          cmd = [args.script, '-i', args.input, '-k', args.kernel, '-w', kernelWidth, '-t', args.true]
+    else :
+          cmd = [args.script, '-i', args.input, '-k', args.kernel, '-w', kernelWidth]
 
     proc1 = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = proc1.communicate()

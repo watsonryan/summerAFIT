@@ -97,6 +97,7 @@ Vector NoiseModelFactor::whitenedError(const Values& c) const {
 double NoiseModelFactor::error(const Values& c) const {
   if (active(c)) {
     const Vector b = unwhitenedError(c);
+//    std::cout << "unwhitened" << " " <<  b[0] << " " << b[1] << " " << b[2] << " "  << std::endl;
     check(noiseModel_, b.size());
     if (noiseModel_)
       return 0.5 * noiseModel_->distance(b);
