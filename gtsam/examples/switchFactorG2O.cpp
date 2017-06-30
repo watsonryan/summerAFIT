@@ -12,7 +12,6 @@
 #include <gtsam/geometry/Pose2.h>
 #include <gtsam/slam/PriorFactor.h>
 #include <gtsam/nonlinear/GaussNewtonOptimizer.h>
-#include <gtsam/robustModels/BetweenFactorSwitchable.h>
 
 // BOOST 
 #include <boost/filesystem.hpp>
@@ -57,6 +56,7 @@ int main(const int argc, const char *argv[]) {
 
   string g2oFile, outputFile, kernelType("none"), kerWidth("none"),truePose;
   const string green("\033[0;32m"), red("\033[0;31m");
+  double switchPrior, switchInit;
 
   po::options_description desc("Available options");
   desc.add_options()
@@ -65,6 +65,10 @@ int main(const int argc, const char *argv[]) {
    "Input GNSS data file")
   ("trueGraph,t", po::value<string>(&truePose)->default_value(""), 
    "Input true pose graph for RMS comp.")
+  ("priorSwitch,p", po::value<double>(&switchPrior)->default_value(1.0), 
+   "Initial uncertiently in the switch factor.")
+  ("initSwitch,", po::value<double>(&switchInit)->default_value(1.0), 
+   "Initial switch value .")
   ("output,o", po::value<string>(&outputFile)->default_value(""), 
    "Input INS data file") ;
 
@@ -83,68 +87,29 @@ int main(const int argc, const char *argv[]) {
   NonlinearFactorGraph switchGraph;
   Values::shared_ptr initial;
   bool is3D = false;
-  boost::tie(graph, initial) = readG2o(g2oFile,is3D);
+  boost::tie(graph, initial) = readG2oSwitch(g2oFile,is3D);
 
   NonlinearFactorGraph graphWithPrior = *graph;
+
   noiseModel::Diagonal::shared_ptr priorModel = //
       noiseModel::Diagonal::Variances(Vector3(1, 1, 0.2));
-  graphWithPrior.add(PriorFactor<Pose2>(0, Pose2(), priorModel));
-  SharedNoiseModel switchPriorModel = noiseModel::Diagonal::Sigmas(
-      (Vector(1) << 1 ).finished() ); 
 
+  graphWithPrior.add(PriorFactor<Pose2>(0, Pose2(), priorModel));
 
   Values result = GaussNewtonOptimizer(graphWithPrior, *initial).optimize();  
 
-  // Run Max Mixture over inital results
-  // For now, run BMM offline to get cov. est. 
-  Vector9 hyp, null;
-  hyp << 16.89882198, -0.90303439, 0.08602105, 
-        -0.90303439, 17.08403007, 0.06889149,
-         0.08602105, 0.06889149, 10.95290421;
-  null << 2087.43888892, -651.08477092, 198.82917436,
-         -651.08477092, 1977.03231206, -92.72713996,
-         198.82917436, -92.72713996, 1264.0179354;
-
-  auto hypothesis = noiseModel::Gaussian::Covariance( 
-    ( Matrix(3,3) << hyp ).finished() );
-  auto null_model = noiseModel::Gaussian::Covariance( 
-    ( Matrix(3,3) << null ).finished() );
-
-  ifstream is(g2oFile.c_str());
-  string tag;
-  Key id1, id2;
-  while ( !is.eof() ) {
-    if (!(is >> tag)) { break; }
-    if ((tag == "EDGE2") || (tag == "EDGE") || (tag == "EDGE_SE2")
-        || (tag == "ODOMETRY")) {
-      double x, y, yaw;
-      is >> id1 >> id2 >> x >> y >> yaw;
-      Pose2 l1Xl2(x, y, yaw);
-
-      boost::shared_ptr<PriorFactor <SwitchVariableLinear> > switchPriorFactor(
-    			new PriorFactor<SwitchVariableLinear>(Symbol('s',i),
-    			SwitchVariableLinear(1.0),
-          switchPriorModel));
-      NonlinearFactor::shared_ptr factor(
-          new BetweenFactorSwitchable<Pose2>(id1, id2, l1Xl2, hypothesis, null_model,
-            hyp, null ));
-
-      switchGraph.add(factor);
-    }
-  }
-  Values resultMix = GaussNewtonOptimizer(switchGraph, *initial).optimize();  
-//  switchGraph.printErrors(resultMix);
-
 
 	vector<Pose2> finalPose, initPose;
-	Values::ConstFiltered<Pose2> result_poses = resultMix.filter<Pose2>();
+	Values::ConstFiltered<Pose2> result_poses = result.filter<Pose2>();
 	foreach (const Values::ConstFiltered<Pose2>::KeyValuePair& key_value, result_poses) {
     Pose2 q = key_value.value;
     cout << q.x() << " " <<  q.y() << endl;
     finalPose.push_back(q);
 		}
 
-  if ( !truePose.empty() ) { boost::tie(graph, initial) = readG2o(truePose,is3D); }
+  if ( !truePose.empty() ) { boost::tie(graph, initial) = readG2oSwitch(truePose,
+                                                                 is3D, switchPrior,
+                                                                 switchInit); }
 
 	Values::ConstFiltered<Pose2> init_poses = initial->filter<Pose2>();
 	foreach (const Values::ConstFiltered<Pose2>::KeyValuePair& key_value, init_poses) {

@@ -458,102 +458,120 @@ GraphAndValues load2D(const string& filename, SharedNoiseModel model, Key maxID,
   return make_pair(graph, initial);
 }
 
+/* ************************************************************************* */
+GraphAndValues load2DSwitch(const string& filename, SharedNoiseModel model, Key maxID,
+    bool addNoise, bool smart, NoiseFormat noiseFormat, double siwtchPrior, double switchInit) {
+
+  int i = 0;
+  ifstream is(filename.c_str());
+  if (!is)
+    throw invalid_argument("load2D: can not find file " + filename);
+
+  Values::shared_ptr initial(new Values);
+  NonlinearFactorGraph::shared_ptr graph(new NonlinearFactorGraph);
+
+  string tag;
+
+  // load the poses
+  while (!is.eof()) {
+    if (!(is >> tag))
+      break;
+
+    if ((tag == "VERTEX2") || (tag == "VERTEX_SE2") || (tag == "VERTEX")) {
+      Key id;
+      double x, y, yaw;
+      is >> id >> x >> y >> yaw;
+
+      // optional filter
+      if (maxID && id >= maxID)
+        continue;
+
+      initial->insert(id, Pose2(x, y, yaw));
+    }
+    is.ignore(LINESIZE, '\n');
+  }
+  is.clear(); /* clears the end-of-file and error flags */
+  is.seekg(0, ios::beg);
+
+  // If asked, create a sampler with random number generator
+  Sampler sampler;
+  if (addNoise) {
+    noiseModel::Diagonal::shared_ptr noise;
+    if (model)
+      noise = boost::dynamic_pointer_cast<noiseModel::Diagonal>(model);
+    if (!noise)
+      throw invalid_argument(
+          "gtsam::load2D: invalid noise model for adding noise"
+              "(current version assumes diagonal noise model)!");
+    sampler = Sampler(noise);
+  }
 
 
+  SharedNoiseModel switchPriorModel = noiseModel::Diagonal::Sigmas(
+      (Vector(1) << siwtchPrior ).finished() ); 
+  // Parse the pose constraints
+  Key id1, id2;
+  bool haveLandmark = false;
+  const bool useModelInFile = !model;
+  while (!is.eof()) {
+    if (!(is >> tag))
+      break;
 
-///* ************************************************************************* */
-//GraphAndValues load2DMix(const string& filename, SharedNoiseModel hyp,
-//    SharedNoiseModel null, Key maxID, bool addNoise, bool smart, 
-//    NoiseFormat noiseFormat) {
+    if ((tag == "EDGE2") || (tag == "EDGE") || (tag == "EDGE_SE2")
+        || (tag == "ODOMETRY")) {
 
-//  ifstream is(filename.c_str());
-//  if (!is)
-//    throw invalid_argument("load2D: can not find file " + filename);
+      // Read transform
+      double x, y, yaw;
+      is >> id1 >> id2 >> x >> y >> yaw;
+      Pose2 l1Xl2(x, y, yaw);
 
-//  Values::shared_ptr initial(new Values);
-//  NonlinearFactorGraph::shared_ptr graph(new NonlinearFactorGraph);
+      // read noise model
+      // read noise model
+      SharedNoiseModel modelInFile = readNoiseModel(is, smart, noiseFormat,
+          KernelFunctionTypeNONE);
 
-//  string tag;
+      // optional filter
+      if (maxID && (id1 >= maxID || id2 >= maxID))
+        continue;
 
-//  // load the poses
-//  while (!is.eof()) {
-//    if (!(is >> tag))
-//      break;
+      if (useModelInFile)
+        model = modelInFile;
 
-//    if ((tag == "VERTEX2") || (tag == "VERTEX_SE2") || (tag == "VERTEX")) {
-//      Key id;
-//      double x, y, yaw;
-//      is >> id >> x >> y >> yaw;
+      if (addNoise)
+        l1Xl2 = l1Xl2.retract(sampler.sample());
 
-//      // optional filter
-//      if (maxID && id >= maxID)
-//        continue;
+      // Insert vertices if pure odometry file
+      if (!initial->exists(id1))
+        initial->insert(id1, Pose2());
+      if (!initial->exists(id2))
+        initial->insert(id2, initial->at<Pose2>(id1) * l1Xl2);
 
-//      initial->insert(id, Pose2(x, y, yaw));
-//    }
-//    is.ignore(LINESIZE, '\n');
-//  }
-//  is.clear(); /* clears the end-of-file and error flags */
-//  is.seekg(0, ios::beg);
+      boost::shared_ptr<PriorFactor<SwitchVariableLinear>> switchPriorFactor(
+        new PriorFactor<SwitchVariableLinear>(Symbol('s',i),
+        SwitchVariableLinear(switchInit), switchPriorModel));
 
-//  // If asked, create a sampler with random number generator
-//  Sampler sampler;
-//  if (addNoise) {
-//    noiseModel::Diagonal::shared_ptr noise;
-//    if (model)
-//      noise = boost::dynamic_pointer_cast<noiseModel::Diagonal>(model);
-//    if (!noise)
-//      throw invalid_argument(
-//          "gtsam::load2D: invalid noise model for adding noise"
-//              "(current version assumes diagonal noise model)!");
-//    sampler = Sampler(noise);
-//  }
+      initial->insert(Symbol('s',i),SwitchVariableLinear(switchInit));
 
-//  // Parse the pose constraints
-//  Key id1, id2;
-//  bool haveLandmark = false;
-//  const bool useModelInFile = !model;
-//  while (!is.eof()) {
-//    if (!(is >> tag))
-//      break;
+      NonlinearFactor::shared_ptr switchFactor(
+          new BetweenFactorSwitchableLinear<Pose2>(id1, id2, Symbol('s',i), 
+          l1Xl2, model));
+      i++; 
+      graph->push_back(switchPriorFactor);
+      graph->push_back(switchFactor);
+    }
+    // Parse measurements
+    double bearing, range, bearing_std, range_std;
 
-//    if ((tag == "EDGE2") || (tag == "EDGE") || (tag == "EDGE_SE2")
-//        || (tag == "ODOMETRY")) {
+    // A bearing-range measurement
+    if (tag == "BR") {
+      is >> id1 >> id2 >> bearing >> range >> bearing_std >> range_std;
+    }
 
-//      // Read transform
-//      double x, y, yaw;
-//      is >> id1 >> id2 >> x >> y >> yaw;
-//      Pose2 l1Xl2(x, y, yaw);
+    is.ignore(LINESIZE, '\n');
+  }
 
-//      // read noise model
-//      SharedNoiseModel modelInFile = readNoiseModel(is, smart, noiseFormat,
-//          kernelFunctionType);
-
-//      // optional filter
-//      if (maxID && (id1 >= maxID || id2 >= maxID))
-//        continue;
-
-//      if (useModelInFile)
-//        model = modelInFile;
-
-//      if (addNoise)
-//        l1Xl2 = l1Xl2.retract(sampler.sample());
-
-//      // Insert vertices if pure odometry file
-//      if (!initial->exists(id1))
-//        initial->insert(id1, Pose2());
-//      if (!initial->exists(id2))
-//        initial->insert(id2, initial->at<Pose2>(id1) * l1Xl2);
-
-//      NonlinearFactor::shared_ptr factor(
-//          new BetweenFactor<Pose2>(id1, id2, l1Xl2, model));
-//      graph->push_back(factor);
-//    }
-//    is.ignore(LINESIZE, '\n');
-//  }
-
-//  return make_pair(graph, initial);
-//}
+  return make_pair(graph, initial);
+}
 
 
 /* ************************************************************************* */
@@ -779,6 +797,21 @@ GraphAndValues readG2oRobust(const string& g2oFile, const bool is3D,
 
   return load2DRobust(g2oFile, SharedNoiseModel(), maxID, addNoise, smart,
       NoiseFormatG2O, kernelFunctionType, kerWidth );
+}
+
+
+GraphAndValues readG2oSwitch(const string& g2oFile, const bool is3D,
+    double switchPrior, double switchInit) {
+  // just call load2D
+  int maxID = 0;
+  bool addNoise = false;
+  bool smart = true;
+
+  if(is3D)
+    return load3D(g2oFile);
+
+  return load2DSwitch(g2oFile, SharedNoiseModel(), maxID, addNoise, smart,
+      NoiseFormatG2O, switchPrior, switchInit );
 }
 
 /* ************************************************************************* */
