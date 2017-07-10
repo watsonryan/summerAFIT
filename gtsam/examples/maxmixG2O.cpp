@@ -94,12 +94,12 @@ int main(const int argc, const char *argv[]) {
   // Run Max Mixture over inital results
   // For now, run BMM offline to get cov. est. 
   Vector9 hyp, null;
-  hyp << 16.89882198, -0.90303439, 0.08602105, 
-        -0.90303439, 17.08403007, 0.06889149,
-         0.08602105, 0.06889149, 10.95290421;
-  null << 2087.43888892, -651.08477092, 198.82917436,
-         -651.08477092, 1977.03231206, -92.72713996,
-         198.82917436, -92.72713996, 1264.0179354;
+  hyp << 9.02055279e-03,   1.48328991e-04,   1.14660330e-04,
+         1.48328991e-04,   5.34210537e-03,   1.54383430e-05,
+         1.14660330e-04,   1.54383430e-05,   3.19365863e-03;
+  null << 17.8066434,   -2.90838704,   1.79683392,
+         -2.90838704,  98.88269146,  -2.24786219,
+          1.79683392,  -2.24786219,   1.15852603;
 
   auto hypothesis = noiseModel::Gaussian::Covariance( 
     ( Matrix(3,3) << hyp ).finished() );
@@ -131,7 +131,7 @@ int main(const int argc, const char *argv[]) {
 	Values::ConstFiltered<Pose2> result_poses = resultMix.filter<Pose2>();
 	foreach (const Values::ConstFiltered<Pose2>::KeyValuePair& key_value, result_poses) {
     Pose2 q = key_value.value;
-    cout << q.x() << " " <<  q.y() << endl;
+//    cout << q.x() << " " <<  q.y() << endl;
     finalPose.push_back(q);
 		}
 
@@ -140,6 +140,7 @@ int main(const int argc, const char *argv[]) {
 	Values::ConstFiltered<Pose2> init_poses = initial->filter<Pose2>();
 	foreach (const Values::ConstFiltered<Pose2>::KeyValuePair& key_value, init_poses) {
     Pose2 q = key_value.value;
+//    cout << q.x() << " " <<  q.y() << endl;
     initPose.push_back(q);
   }
 

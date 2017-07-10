@@ -129,7 +129,6 @@ int main(const int argc, const char *argv[]) {
 	foreach (const Values::ConstFiltered<Pose2>::KeyValuePair& key_value, result_poses) {
     Pose2 q = key_value.value;
     finalPose.push_back(q);
-    cout << q.x() << " " << q.y() << endl;
 		}
 
   if ( !truePose.empty() ) { boost::tie(graph, initial) = readG2o(truePose,is3D); }
@@ -137,6 +136,7 @@ int main(const int argc, const char *argv[]) {
 	Values::ConstFiltered<Pose2> init_poses = initial->filter<Pose2>();
 	foreach (const Values::ConstFiltered<Pose2>::KeyValuePair& key_value, init_poses) {
     Pose2 q = key_value.value;
+    cout << q.x() << " " << q.y() << endl;
     initPose.push_back(q);
   }
 

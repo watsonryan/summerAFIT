@@ -87,7 +87,7 @@ int main(const int argc, const char *argv[]) {
   NonlinearFactorGraph switchGraph;
   Values::shared_ptr initial;
   bool is3D = false;
-  boost::tie(graph, initial) = readG2oSwitch(g2oFile,is3D);
+  boost::tie(graph, initial) = readG2oSwitch(g2oFile,is3D, switchPrior, switchInit);
 
   NonlinearFactorGraph graphWithPrior = *graph;
 
@@ -103,7 +103,6 @@ int main(const int argc, const char *argv[]) {
 	Values::ConstFiltered<Pose2> result_poses = result.filter<Pose2>();
 	foreach (const Values::ConstFiltered<Pose2>::KeyValuePair& key_value, result_poses) {
     Pose2 q = key_value.value;
-    cout << q.x() << " " <<  q.y() << endl;
     finalPose.push_back(q);
 		}
 
@@ -114,6 +113,7 @@ int main(const int argc, const char *argv[]) {
 	Values::ConstFiltered<Pose2> init_poses = initial->filter<Pose2>();
 	foreach (const Values::ConstFiltered<Pose2>::KeyValuePair& key_value, init_poses) {
     Pose2 q = key_value.value;
+//    cout << q.x() << " " <<  q.y() << endl;
     initPose.push_back(q);
   }
 
