@@ -105,6 +105,10 @@ namespace gtsam {
     void printErrors(const Values& values, const std::string& str = "NonlinearFactorGraph: ",
                      const KeyFormatter& keyFormatter = DefaultKeyFormatter) const;
 
+    /** print errors along with factors*/
+    void printRes(const Values& values, const std::string& str = "NonlinearFactorGraph: ",
+                     const KeyFormatter& keyFormatter = DefaultKeyFormatter) const;
+
     /** Test equality */
     bool equals(const NonlinearFactorGraph& other, double tol = 1e-9) const;
 

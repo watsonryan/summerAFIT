@@ -77,6 +77,22 @@ void NonlinearFactorGraph::printErrors(const Values& values, const std::string& 
   }
 }
 
+void NonlinearFactorGraph::printRes(const Values& values, const std::string& str,
+                                       const KeyFormatter& keyFormatter) const {
+  cout << str << "size: " << size() << endl
+       << endl;
+  for (size_t i = 0; i < factors_.size(); i++) {
+    stringstream ss;
+    ss << "Factor " << i << ": ";
+    if (factors_[i] == NULL) {
+      cout << "NULL" << endl;
+    } else {
+      cout << "error = " << factors_[i]->error(values) << endl;
+    }
+    cout << endl;
+  }
+}
+
 /* ************************************************************************* */
 bool NonlinearFactorGraph::equals(const NonlinearFactorGraph& other, double tol) const {
   return Base::equals(other, tol);

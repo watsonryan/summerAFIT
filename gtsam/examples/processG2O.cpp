@@ -54,6 +54,7 @@ double median(vector<double> medi) {
 
 int main(const int argc, const char *argv[]) {
 
+  bool printRes, writePose, residual;
   string g2oFile, outputFile, kernelType("none"), kerWidth("none"), truePose;
   const string green("\033[0;32m"), red("\033[0;31m");
 
@@ -69,11 +70,18 @@ int main(const int argc, const char *argv[]) {
   ("kerWidth,w", po::value<string>(&kerWidth)->default_value("none"),
   "define the robust cost function (e.g., Huber, Tukey, Cauchy ... ).")
   ("output,o", po::value<string>(&outputFile)->default_value(""), 
-   "Input INS data file") ;
+   "Input INS data file") 
+  ("residual",
+    "Would you like to print the unwhitened error ( h(x)-z )?")
+  ("writePose",
+   " Would you like to save the pose values to a text file?") ;
 
   po::variables_map vm;
   po::store(po::command_line_parser(argc, argv).options(desc).run(), vm);
   po::notify(vm);
+
+  writePose = (vm.count("writePose")>0);
+  residual = (vm.count("residual")>0);
 
   if ( g2oFile.empty() ) { 
         cout << red << "\n\n GNSS data must be specified\n" 
@@ -121,24 +129,31 @@ int main(const int argc, const char *argv[]) {
   graphWithPrior.add(PriorFactor<Pose2>(0, Pose2(), priorModel));
   Values result = GaussNewtonOptimizer(graphWithPrior, *initial).optimize();  
 
-//  cout <<graph->error(result)<<endl;
-//  graph->printErrors(result);
+  graph->printErrors(result);
+
+  ofstream iPose ("truePose.txt");
+  ofstream fPose ("optimizedPose.txt");
 
 	vector<Pose2> finalPose, initPose;
 	Values::ConstFiltered<Pose2> result_poses = result.filter<Pose2>();
 	foreach (const Values::ConstFiltered<Pose2>::KeyValuePair& key_value, result_poses) {
     Pose2 q = key_value.value;
     finalPose.push_back(q);
-		}
+    if (writePose)
+      { fPose << q.x() << " " << q.y() << " " << q.theta() << " " << "\n" ; }
+	}
+  fPose.close();
 
   if ( !truePose.empty() ) { boost::tie(graph, initial) = readG2o(truePose,is3D); }
 
 	Values::ConstFiltered<Pose2> init_poses = initial->filter<Pose2>();
 	foreach (const Values::ConstFiltered<Pose2>::KeyValuePair& key_value, init_poses) {
     Pose2 q = key_value.value;
-    cout << q.x() << " " << q.y() << endl;
     initPose.push_back(q);
-  }
+    if (writePose)
+      { iPose << q.x() << " " << q.y() << " " << q.theta() << " " << "\n" ; }
+	}
+  iPose.close();
 
   vector<double> rss;
   for(unsigned int i = 0; i < initPose.size(); i++ ) {
