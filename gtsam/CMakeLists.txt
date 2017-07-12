@@ -70,16 +70,13 @@ option(GTSAM_TYPEDEF_POINTS_TO_VECTORS   "Typdef Point2 and Point3 to Eigen::Vec
 option(GTSAM_SUPPORT_NESTED_DISSECTION   "Support Metis-based nested dissection" ON)
 option(GTSAM_TANGENT_PREINTEGRATION      "Use new ImuFactor with integration on tangent space" ON)
 
-
-
 find_package(Boost COMPONENTS python filesystem system REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 
 # Find Python
 FIND_PACKAGE(PythonLibs 2.7 REQUIRED)
 INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_DIRS})
-
-
+include(GtsamPythonWrap)
 
 # Options relating to MATLAB wrapper
 # TODO: Check for matlab mex binary before handling building of binaries

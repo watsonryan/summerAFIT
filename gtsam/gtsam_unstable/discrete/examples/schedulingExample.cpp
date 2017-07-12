@@ -57,7 +57,7 @@ Scheduler largeExample(size_t nrStudents = 7) {
 //  cCurrentPath[sizeof(cCurrentPath) - 1] = '\0'; /* not really required */
 //  printf ("The current working directory is %s", cCurrentPath);
 
-  string path("../../../gtsam_unstable/discrete/examples/");
+  string path("../../../../gtsam_unstable/discrete/examples/");
   Scheduler s(nrStudents, path + "Doodle.csv");
 
   s.addArea("Harvey Lipkin", "Mechanics");
