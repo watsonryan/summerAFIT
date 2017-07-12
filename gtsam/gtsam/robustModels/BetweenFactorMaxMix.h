@@ -52,8 +52,9 @@ namespace gtsam {
           double l2 = nu2 * exp(-0.5*m2);
 
           // Remove this weight later. This was calculated 
-          // externally by taking forbenius( hyp-null ) 
-          double weight = 0.00037063;
+          // externally by taking forbenius( hyp-null )
+          Matrix diff = (Matrix(3,3) << hypVec - nullVec).finished();
+          double weight = 1/diff.norm();
           if (l2>l1) {
             if (H1) *H1 = *H1 * weight;
             if (H2) *H2 = *H2 * weight;

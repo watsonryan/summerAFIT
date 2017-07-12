@@ -16,6 +16,7 @@
 
 // BOOST 
 #include <boost/filesystem.hpp>
+
 #include <boost/program_options.hpp>
 #include <boost/serialization/export.hpp>
 #include <boost/archive/binary_iarchive.hpp>
@@ -24,11 +25,15 @@
 // STL
 #include <fstream>
 
+// Python 
+#include <Python.h>
+#include <boost/python/module.hpp>
 
 using namespace std;
 using namespace gtsam;
 using namespace boost;
 namespace po = boost::program_options;
+namespace py = boost::python;
 
 #ifndef FOREACH_HPP
   #define FOREACH_HPP
@@ -94,12 +99,19 @@ int main(const int argc, const char *argv[]) {
   // Run Max Mixture over inital results
   // For now, run BMM offline to get cov. est. 
   Vector9 hyp, null;
-  hyp << 9.02055279e-03,   1.48328991e-04,   1.14660330e-04,
-         1.48328991e-04,   5.34210537e-03,   1.54383430e-05,
-         1.14660330e-04,   1.54383430e-05,   3.19365863e-03;
-  null << 17.8066434,   -2.90838704,   1.79683392,
-         -2.90838704,  98.88269146,  -2.24786219,
-          1.79683392,  -2.24786219,   1.15852603;
+  hyp << 0.7600749,   0.65958178,  0.00801016,
+         0.65958178,  2.13757748,  0.00539656,
+         0.00801016,  0.00539656,  0.11034811;
+  null << 6.19836671e+03,  -5.99842981e+02,  -5.49079775e+00,
+         -5.99842981e+02,   5.84723158e+03,  -3.80187123e-01,
+          -5.49079775e+00,  -3.80187123e-01,   1.85918997e+00;
+
+//  hyp << 16.89882198, -0.90303439, 0.08602105, 
+//        -0.90303439, 17.08403007, 0.06889149,
+//         0.08602105, 0.06889149, 10.95290421;
+//  null << 2087.43888892, -651.08477092, 198.82917436,
+//         -651.08477092, 1977.03231206, -92.72713996,
+//         198.82917436, -92.72713996, 1264.0179354;
 
   auto hypothesis = noiseModel::Gaussian::Covariance( 
     ( Matrix(3,3) << hyp ).finished() );
