@@ -92,6 +92,24 @@ double LinearContainerFactor::error(const Values& c) const {
   return error;
 }
 
+
+/* ************************************************************************* */
+Vector LinearContainerFactor::residual(const Values& c) const {
+
+  // Extract subset of values for comparison
+  Values csub;
+  for (Key key : keys())
+    csub.insert(key, c.at(key));
+
+  // create dummy ordering for evaluation
+  VectorValues delta = linearizationPoint_->localCoordinates(csub);
+
+  // compute error
+  Vector error = factor_->residual(delta);
+
+  return error;
+}
+
 /* ************************************************************************* */
 size_t LinearContainerFactor::dim() const {
   if (isJacobian())

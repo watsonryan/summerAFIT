@@ -355,6 +355,17 @@ double HessianFactor::error(const VectorValues& c) const {
   return 0.5 * (f - 2.0 * xtg + xGx);
 }
 
+
+/* ************************************************************************* */
+Vector HessianFactor::residual(const VectorValues& c) const {
+  // error 0.5*(f - 2*x'*g + x'*G*x)
+  // extract the relevant subset of the VectorValues
+  // NOTE may not be as efficient
+  const Vector x = c.vector(keys());
+  return x;
+}
+
+
 /* ************************************************************************* */
 void HessianFactor::updateHessian(const FastVector<Key>& infoKeys,
                                   SymmetricBlockMatrix* info) const {

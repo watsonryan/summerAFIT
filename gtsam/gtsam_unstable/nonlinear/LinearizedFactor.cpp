@@ -98,6 +98,10 @@ double LinearizedJacobianFactor::error(const Values& c) const {
   return 0.5 * errorVector.dot(errorVector);
 }
 
+Vector LinearizedJacobianFactor::residual(const Values& c) const {
+  return error_vector(c);
+}
+
 /* ************************************************************************* */
 boost::shared_ptr<GaussianFactor>
 LinearizedJacobianFactor::linearize(const Values& c) const {
@@ -195,6 +199,10 @@ double LinearizedHessianFactor::error(const Values& c) const {
   double xGx = dx.transpose() * squaredTerm() * dx;
 
   return 0.5 * (f - 2.0 * xtg +  xGx);
+}
+
+Vector LinearizedHessianFactor::residual(const Values& c) const {
+  return Vector::Zero(dim());
 }
 
 /* ************************************************************************* */

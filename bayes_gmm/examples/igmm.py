@@ -60,8 +60,8 @@ def main():
   prior = NIW(m_0, k_0, v_0, S_0)
 
   # Setup IGMM
-#    igmm = IGMM(Data, prior, args.alpha, assignments="rand", K=args.initComp)
-  igmm = IGMM(Data, prior, args.alpha, assignments="one-by-one", K=args.initComp)
+  igmm = IGMM(Data, prior, args.alpha, assignments="rand", K=args.initComp)
+#  igmm = IGMM(Data, prior, args.alpha, assignments="one-by-one", K=args.initComp)
 
   # Perform Gibbs sampling
   record = igmm.gibbs_sample(args.iterations)

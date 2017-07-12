@@ -303,6 +303,12 @@ public:
     return 0.5 * (result + f);
   }
 
+
+  /// Placehooooooooooooooooolder 
+  virtual Vector residual(const VectorValues& values) const {
+    return Vector(0.0);
+  }
+
   // needed to be GaussianFactor - (I - E*P*E')*(F*x - b)
   // This is wrong and does not match the definition in Hessian,
   // but it matches the definition of the Jacobian factor (JF)

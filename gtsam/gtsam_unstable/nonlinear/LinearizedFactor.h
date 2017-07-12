@@ -135,6 +135,8 @@ public:
   /** Calculate the error of the factor */
   double error(const Values& c) const;
 
+  Vector residual(const Values& c) const;
+
   /**
    * linearize to a GaussianFactor
    * Reimplemented from NoiseModelFactor to directly copy out the
@@ -265,6 +267,8 @@ public:
 
   /** Calculate the error of the factor */
   double error(const Values& c) const;
+  
+  Vector residual(const Values& c) const;
 
   /**
    * linearize to a GaussianFactor

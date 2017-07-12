@@ -146,6 +146,12 @@ public:
     }
   }
 
+
+  /// Placehooooooooooooooooolder 
+  virtual Vector residual(const Values& values) const {
+    return Vector(0.0);
+  }
+
   /** return the calibration object */
   inline const std::vector<boost::shared_ptr<Cal3_S2Stereo> > calibration() const {
     return K_all_;

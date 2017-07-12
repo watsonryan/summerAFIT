@@ -403,32 +403,32 @@ namespace gtsam {
     }
   }
 
-  ///* ************************************************************************* */
-  //void residual(const GaussianFactorGraph& fg, const VectorValues &x, VectorValues &r) {
-  //  Key i = 0 ;
-  //  for (const GaussianFactor::shared_ptr& factor, fg) {
-  //    JacobianFactor::shared_ptr Ai = convertToJacobianFactorPtr(factor);
-  //    r[i] = Ai->getb();
-  //    i++;
-  //  }
-  //  VectorValues Ax = VectorValues::SameStructure(r);
-  //  multiply(fg,x,Ax);
-  //  axpy(-1.0,Ax,r);
-  //}
+//  /* ************************************************************************* */
+//  void residual(const GaussianFactorGraph& fg, const VectorValues &x, VectorValues &r) {
+//    Key i = 0 ;
+//    for (const GaussianFactor::shared_ptr& factor, fg) {
+//      JacobianFactor::shared_ptr Ai = convertToJacobianFactorPtr(factor);
+//      r[i] = Ai->getb();
+//      i++;
+//    }
+//    VectorValues Ax = VectorValues::SameStructure(r);
+//    multiply(fg,x,Ax);
+//    axpy(-1.0,Ax,r);
+//  }
 
-  ///* ************************************************************************* */
-  //void multiply(const GaussianFactorGraph& fg, const VectorValues &x, VectorValues &r) {
-  //  r.setZero();
-  //  Key i = 0;
-  //  for (const GaussianFactor::shared_ptr& factor, fg) {
-  //    JacobianFactor::shared_ptr Ai = convertToJacobianFactorPtr(factor);
-  //    Vector &y = r[i];
-  //    for (JacobianFactor::const_iterator j = Ai->begin(); j != Ai->end(); ++j) {
-  //      y += Ai->getA(j) * x[*j];
-  //    }
-  //    ++i;
-  //  }
-  //}
+//  /* ************************************************************************* */
+//  void multiply(const GaussianFactorGraph& fg, const VectorValues &x, VectorValues &r) {
+//    r.setZero();
+//    Key i = 0;
+//    for (const GaussianFactor::shared_ptr& factor, fg) {
+//      JacobianFactor::shared_ptr Ai = convertToJacobianFactorPtr(factor);
+//      Vector &y = r[i];
+//      for (JacobianFactor::const_iterator j = Ai->begin(); j != Ai->end(); ++j) {
+//        y += Ai->getA(j) * x[*j];
+//      }
+//      ++i;
+//    }
+//  }
 
   /* ************************************************************************* */
   VectorValues GaussianFactorGraph::transposeMultiply(const Errors& e) const

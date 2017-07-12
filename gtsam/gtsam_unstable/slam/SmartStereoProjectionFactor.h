@@ -448,6 +448,12 @@ public:
     }
   }
 
+
+  /// Placehooooooooooooooooolder 
+  virtual Vector residual(const Values& values) const {
+    return Vector(0.0);
+  }
+
   /**
    * This corrects the Jacobians and error vector for the case in which the right pixel in the monocular camera is missing (nan)
    */

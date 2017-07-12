@@ -420,6 +420,11 @@ public:
     }
   }
 
+  /// Placehooooooooooooooooolder 
+  virtual Vector residual(const Values& values) const {
+    return Vector(0.0);
+  }
+
   /** return the landmark */
   TriangulationResult point() const {
     return result_;

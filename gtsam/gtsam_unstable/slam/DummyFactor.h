@@ -50,6 +50,8 @@ public:
    */
   virtual double error(const Values& c) const { return 0.0; }
 
+  virtual Vector residual(const Values& c) const { return Vector(0.0); }
+
   /** get the dimension of the factor (number of rows on linearization) */
   virtual size_t dim() const { return rowDim_; }
 

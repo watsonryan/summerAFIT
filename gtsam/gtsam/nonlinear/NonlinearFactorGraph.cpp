@@ -79,15 +79,13 @@ void NonlinearFactorGraph::printErrors(const Values& values, const std::string& 
 
 void NonlinearFactorGraph::printRes(const Values& values, const std::string& str,
                                        const KeyFormatter& keyFormatter) const {
-  cout << str << "size: " << size() << endl
-       << endl;
   for (size_t i = 0; i < factors_.size(); i++) {
     stringstream ss;
     ss << "Factor " << i << ": ";
     if (factors_[i] == NULL) {
       cout << "NULL" << endl;
     } else {
-      cout << "error = " << factors_[i]->error(values) << endl;
+      cout << (factors_[i]->residual(values)).transpose();
     }
     cout << endl;
   }

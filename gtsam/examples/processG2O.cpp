@@ -1,19 +1,19 @@
 /**
  * @file ProcessG2O.cpp
- * @brief Script to automate the processing of G2O pose-graphs 
+ * @brief Script to automate the processing of G2O pose-graphs
  * @author Ryan
 
-  * How to run ::  ./processG2O -i graph.g2o -o output.txt -k huber -w 1  
+  * How to run ::  ./processG2O -i graph.g2o -o output.txt -k huber -w 1
  */
 
 
-// GTSAM 
+// GTSAM
 #include <gtsam/slam/dataset.h>
 #include <gtsam/geometry/Pose2.h>
 #include <gtsam/slam/PriorFactor.h>
 #include <gtsam/nonlinear/GaussNewtonOptimizer.h>
 
-// BOOST 
+// BOOST
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 #include <boost/serialization/export.hpp>
@@ -61,16 +61,16 @@ int main(const int argc, const char *argv[]) {
   po::options_description desc("Available options");
   desc.add_options()
   ("help,h", "Print help message")
-  ("input,i", po::value<string>(&g2oFile)->default_value(""), 
+  ("input,i", po::value<string>(&g2oFile)->default_value(""),
    "Input GNSS data file")
-  ("trueGraph,t", po::value<string>(&truePose)->default_value(""), 
+  ("trueGraph,t", po::value<string>(&truePose)->default_value(""),
    "Input true pose graph for RMS comp.")
   ("kernel,k", po::value<string>(&kernelType)->default_value("none"),
   "define the robust cost function (e.g., Huber, Tukey, Cauchy ... ).")
   ("kerWidth,w", po::value<string>(&kerWidth)->default_value("none"),
   "define the robust cost function (e.g., Huber, Tukey, Cauchy ... ).")
-  ("output,o", po::value<string>(&outputFile)->default_value(""), 
-   "Input INS data file") 
+  ("output,o", po::value<string>(&outputFile)->default_value(""),
+   "Input INS data file")
   ("residual",
     "Would you like to print the unwhitened error ( h(x)-z )?")
   ("writePose",
@@ -83,8 +83,8 @@ int main(const int argc, const char *argv[]) {
   writePose = (vm.count("writePose")>0);
   residual = (vm.count("residual")>0);
 
-  if ( g2oFile.empty() ) { 
-        cout << red << "\n\n GNSS data must be specified\n" 
+  if ( g2oFile.empty() ) {
+        cout << red << "\n\n GNSS data must be specified\n"
              << "\n\n" << green << desc << endl;
         exit(1);
     }
@@ -98,7 +98,7 @@ int main(const int argc, const char *argv[]) {
     boost::tie(graph, initial) = readG2o(g2oFile,is3D);
   }
   if(kernelType.compare("huber") == 0){
-    boost::tie(graph, initial) = readG2oRobust(g2oFile,is3D, 
+    boost::tie(graph, initial) = readG2oRobust(g2oFile,is3D,
       KernelFunctionTypeHUBER, atof(kerWidth.c_str()));
   }
   if(kernelType.compare("tukey") == 0){
@@ -127,9 +127,9 @@ int main(const int argc, const char *argv[]) {
   noiseModel::Diagonal::shared_ptr priorModel = //
       noiseModel::Diagonal::Variances(Vector3(1e-6, 1e-6, 1e-8));
   graphWithPrior.add(PriorFactor<Pose2>(0, Pose2(), priorModel));
-  Values result = GaussNewtonOptimizer(graphWithPrior, *initial).optimize();  
+  Values result = GaussNewtonOptimizer(graphWithPrior, *initial).optimize();
 
-  graph->printErrors(result);
+  graph->printRes(result);
 
   ofstream iPose ("truePose.txt");
   ofstream fPose ("optimizedPose.txt");
@@ -158,7 +158,7 @@ int main(const int argc, const char *argv[]) {
   vector<double> rss;
   for(unsigned int i = 0; i < initPose.size(); i++ ) {
     Point2 err = initPose[i].translation() - finalPose[i].translation();
-    double e = sqrt( pow( err.x(),2) + pow(err.y(),2) ); 
+    double e = sqrt( pow( err.x(),2) + pow(err.y(),2) );
     rss.push_back( e );
   }
 

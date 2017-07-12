@@ -63,6 +63,8 @@ namespace gtsam {
     /** Print for testable */
     virtual double error(const VectorValues& c) const = 0; /**  0.5*(A*x-b)'*D*(A*x-b) */
 
+    virtual Vector residual(const VectorValues& c) const = 0; /** Ax-b */ 
+
     /** Return the dimension of the variable pointed to by the given key iterator */
     virtual DenseIndex getDim(const_iterator variable) const = 0;
 

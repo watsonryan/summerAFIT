@@ -110,6 +110,12 @@ public:
     }
   }
 
+
+  /// Placehooooooooooooooooolder 
+  virtual Vector residual(const Values& values) const {
+    return Vector(0.0);
+  }
+
   /** return calibration shared pointers */
   inline const boost::shared_ptr<CALIBRATION> calibration() const {
     return K_;

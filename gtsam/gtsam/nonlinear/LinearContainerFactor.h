@@ -76,6 +76,8 @@ public:
    */
   double error(const Values& c) const;
 
+  Vector residual(const Values& c) const;
+
   /** get the dimension of the factor: rows of linear factor */
   size_t dim() const;
 

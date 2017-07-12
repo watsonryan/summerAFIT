@@ -93,6 +93,11 @@ Vector NoiseModelFactor::whitenedError(const Values& c) const {
   return noiseModel_ ? noiseModel_->whiten(b) : b;
 }
 
+Vector NoiseModelFactor::residual(const Values& c) const {
+  const Vector b = unwhitenedError(c);
+  return  b;
+}
+
 /* ************************************************************************* */
 double NoiseModelFactor::error(const Values& c) const {
   if (active(c)) {

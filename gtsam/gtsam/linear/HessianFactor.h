@@ -195,6 +195,8 @@ namespace gtsam {
     /** Evaluate the factor error f(x), see above. */
     virtual double error(const VectorValues& c) const; /** 0.5*[x -1]'*H*[x -1] (also see constructor documentation) */
 
+    virtual Vector residual(const VectorValues& c) const;
+
     /** Return the dimension of the variable pointed to by the given key iterator
      * todo: Remove this in favor of keeping track of dimensions with variables?
      * @param variable An iterator pointing to the slot in this factor.  You can

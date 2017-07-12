@@ -99,6 +99,8 @@ public:
    */
   virtual double error(const Values& c) const = 0;
 
+  virtual Vector residual(const Values& c) const = 0;
+
   /** get the dimension of the factor (number of rows on linearization) */
   virtual size_t dim() const = 0;
 
@@ -233,6 +235,8 @@ public:
    */
   Vector whitenedError(const Values& c) const;
 
+  virtual Vector residual(const Values& c) const;  
+
   /**
    * Calculate the error of the factor.
    * This is the log-likelihood, e.g. \f$ 0.5(h(x)-z)^2/\sigma^2 \f$ in case of Gaussian.
@@ -240,6 +244,7 @@ public:
    * to transform it to \f$ (h(x)-z)^2/\sigma^2 \f$, and then multiply by 0.5.
    */
   virtual double error(const Values& c) const;
+
 
   /**
    * Linearize a non-linearFactorN to get a GaussianFactor,

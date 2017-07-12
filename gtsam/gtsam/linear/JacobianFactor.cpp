@@ -441,6 +441,10 @@ double JacobianFactor::error(const VectorValues& c) const {
   return 0.5 * weighted.dot(weighted);
 }
 
+Vector JacobianFactor::residual(const VectorValues& c) const {
+  return unweighted_error(c);
+}
+
 /* ************************************************************************* */
 Matrix JacobianFactor::augmentedInformation() const {
   if (model_) {
