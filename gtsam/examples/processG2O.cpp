@@ -163,7 +163,7 @@ int main(const int argc, const char *argv[]) {
   }
 
   double med = median(rss);
-  cout << med << endl;
+//  cout << med << endl;
 
   return 0;
 }

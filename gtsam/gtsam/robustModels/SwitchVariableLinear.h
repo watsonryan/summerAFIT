@@ -78,8 +78,8 @@ namespace gtsam {
     inline SwitchVariableLinear between(const SwitchVariableLinear& l2,
         boost::optional<gtsam::Matrix&> H1=boost::none,
         boost::optional<gtsam::Matrix&> H2=boost::none) const {
-      if(H1) *H1 = -gtsam::eye(1);
-      if(H2) *H2 = gtsam::eye(1);
+      if(H1) *H1 = -1*(( Matrix(1,1) << 1.0).finished());
+      if(H2) *H2 = (( Matrix(1,1) << 1.0).finished());
       return SwitchVariableLinear(l2.value() - value());
     }
 

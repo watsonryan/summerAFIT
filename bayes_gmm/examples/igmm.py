@@ -29,8 +29,8 @@ def main():
 
   # Add command line interface
   parser = argparse.ArgumentParser(description="Wrapper script to generate "
-                                  "Gaussian mixture-model for pose-graph optimization "   
-                                  "using IGMM." )
+                                  "Gaussian mixture-model for pose-graph"   
+                                  "optimization using IGMM." )
 
   parser.add_argument('-i', '--inputFile', dest='input', 
                      default='../../poseGraphs/man35Faulty/100.res', 
