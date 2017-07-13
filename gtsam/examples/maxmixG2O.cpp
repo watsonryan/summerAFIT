@@ -3,7 +3,7 @@
  * @brief Script to automate the processing of G2O pose-graphs with max-mix
  * @author Ryan
 
-  * How to run ::  ./maxmixG2O -i graph.g2o -o output.txt 
+  * How to run ::  ./maxmixG2O -i graph.g2o -m mixture.txt -o output.txt 
  */
 
 
@@ -24,10 +24,14 @@
 
 // STL
 #include <fstream>
+#include <iostream>
 
 // Python 
 #include <Python.h>
 #include <boost/python/module.hpp>
+
+#include <Eigen/Dense>
+
 
 using namespace std;
 using namespace gtsam;
@@ -60,7 +64,7 @@ double median(vector<double> medi) {
 
 int main(const int argc, const char *argv[]) {
 
-  string g2oFile, outputFile, kernelType("none"), kerWidth("none"),truePose;
+  string g2oFile, outputFile, kernelType("none"), kerWidth("none"),truePose, mixModel;
   const string green("\033[0;32m"), red("\033[0;31m");
 
   po::options_description desc("Available options");
@@ -71,7 +75,9 @@ int main(const int argc, const char *argv[]) {
   ("trueGraph,t", po::value<string>(&truePose)->default_value(""), 
    "Input true pose graph for RMS comp.")
   ("output,o", po::value<string>(&outputFile)->default_value(""), 
-   "Input INS data file") ;
+   "Input INS data file") 
+  ("mixture,m", po::value<string>(&mixModel)->default_value(""), 
+   "Input mixture model") ; 
 
   po::variables_map vm;
   po::store(po::command_line_parser(argc, argv).options(desc).run(), vm);
@@ -83,7 +89,8 @@ int main(const int argc, const char *argv[]) {
         exit(1);
     }
 
-  // reading file and creating factor graph
+
+  // Consturct Graph and inital optimization
   NonlinearFactorGraph::shared_ptr graph;
   NonlinearFactorGraph mixGraph;
   Values::shared_ptr initial;
@@ -96,75 +103,73 @@ int main(const int argc, const char *argv[]) {
   graphWithPrior.add(PriorFactor<Pose2>(0, Pose2(), priorModel));
   Values result = GaussNewtonOptimizer(graphWithPrior, *initial).optimize();  
 
-  // Run Max Mixture over inital results
-  // For now, run BMM offline to get cov. est. 
-  Vector9 hyp, null;
-  hyp << 0.7600749,   0.65958178,  0.00801016,
-         0.65958178,  2.13757748,  0.00539656,
-         0.00801016,  0.00539656,  0.11034811;
-  null << 6.19836671e+03,  -5.99842981e+02,  -5.49079775e+00,
-         -5.99842981e+02,   5.84723158e+03,  -3.80187123e-01,
-          -5.49079775e+00,  -3.80187123e-01,   1.85918997e+00;
-
-//  hyp << 16.89882198, -0.90303439, 0.08602105, 
-//        -0.90303439, 17.08403007, 0.06889149,
-//         0.08602105, 0.06889149, 10.95290421;
-//  null << 2087.43888892, -651.08477092, 198.82917436,
-//         -651.08477092, 1977.03231206, -92.72713996,
-//         198.82917436, -92.72713996, 1264.0179354;
-
-  auto hypothesis = noiseModel::Gaussian::Covariance( 
-    ( Matrix(3,3) << hyp ).finished() );
-  auto null_model = noiseModel::Gaussian::Covariance( 
-    ( Matrix(3,3) << null ).finished() );
-
-  ifstream is(g2oFile.c_str());
-  string tag;
-  Key id1, id2;
-  while ( !is.eof() ) {
-    if (!(is >> tag)) { break; }
-    if ((tag == "EDGE2") || (tag == "EDGE") || (tag == "EDGE_SE2")
-        || (tag == "ODOMETRY")) {
-      double x, y, yaw;
-      is >> id1 >> id2 >> x >> y >> yaw;
-      Pose2 l1Xl2(x, y, yaw);
-      NonlinearFactor::shared_ptr factor(
-          new BetweenFactorMaxMix<Pose2>(id1, id2, l1Xl2, hypothesis, null_model,
-            hyp, null ));
-
-      mixGraph.add(factor);
-    }
+  // Run Max Mixture over inital results 
+  string STRING;
+  Matrix mixture(3,9);
+  Vector9 vec;
+  vector<float> tv;
+  int i=0;
+	ifstream model(mixModel);
+  while( getline(model,STRING,'\n') ) {
+    stringstream ss(STRING);
+      while(getline(ss, STRING, ',')){
+        tv.push_back( stof( STRING ) );
+      }
+    vec << tv[0], tv[1], tv[2], tv[3], tv[4], tv[5], tv[6], tv[7], tv[8];
+    mixture.row(i++) = vec.transpose();
+    tv.clear();
   }
-  Values resultMix = GaussNewtonOptimizer(mixGraph, *initial).optimize();  
-//  mixGraph.printErrors(resultMix);
+  model.close();
+  
+  cout << mixture << endl;
 
+//  auto hypothesis = noiseModel::Gaussian::Covariance( 
+//    ( Matrix(3,3) << hyp ).finished() );
+//  auto null_model = noiseModel::Gaussian::Covariance( 
+//    ( Matrix(3,3) << null ).finished() );
 
-	vector<Pose2> finalPose, initPose;
-	Values::ConstFiltered<Pose2> result_poses = resultMix.filter<Pose2>();
-	foreach (const Values::ConstFiltered<Pose2>::KeyValuePair& key_value, result_poses) {
-    Pose2 q = key_value.value;
-//    cout << q.x() << " " <<  q.y() << endl;
-    finalPose.push_back(q);
-		}
+//  ifstream is(g2oFile.c_str());
+//  string tag;
+//  Key id1, id2;
+//  while ( !is.eof() ) {
+//    if (!(is >> tag)) { break; }
+//    if ((tag == "EDGE2") || (tag == "EDGE") || (tag == "EDGE_SE2")
+//        || (tag == "ODOMETRY")) {
+//      double x, y, yaw;
+//      is >> id1 >> id2 >> x >> y >> yaw;
+//      Pose2 l1Xl2(x, y, yaw);
+//      NonlinearFactor::shared_ptr factor(
+//          new BetweenFactorMaxMix<Pose2>(id1, id2, l1Xl2, hypothesis, null_model,
+//            hyp, null ));
+//      mixGraph.add(factor);
+//    }
+//  }
+//  Values resultMix = GaussNewtonOptimizer(mixGraph, *initial).optimize();  
 
-  if ( !truePose.empty() ) { boost::tie(graph, initial) = readG2o(truePose,is3D); }
+//	vector<Pose2> finalPose, initPose;
+//	Values::ConstFiltered<Pose2> result_poses = resultMix.filter<Pose2>();
+//	foreach (const Values::ConstFiltered<Pose2>::KeyValuePair& key_value, result_poses) {
+//    Pose2 q = key_value.value;
+//    finalPose.push_back(q);
+//		}
 
-	Values::ConstFiltered<Pose2> init_poses = initial->filter<Pose2>();
-	foreach (const Values::ConstFiltered<Pose2>::KeyValuePair& key_value, init_poses) {
-    Pose2 q = key_value.value;
-//    cout << q.x() << " " <<  q.y() << endl;
-    initPose.push_back(q);
-  }
+//  if ( !truePose.empty() ) { boost::tie(graph, initial) = readG2o(truePose,is3D); }
 
-  vector<double> rss;
-  for(unsigned int i = 0; i < initPose.size(); i++ ) {
-    Point2 err = initPose[i].translation() - finalPose[i].translation();
-    double e = sqrt( pow( err.x(),2) + pow(err.y(),2) ); 
-    rss.push_back( e );
-  }
+//	Values::ConstFiltered<Pose2> init_poses = initial->filter<Pose2>();
+//	foreach (const Values::ConstFiltered<Pose2>::KeyValuePair& key_value, init_poses) {
+//    Pose2 q = key_value.value;
+//    initPose.push_back(q);
+//  }
 
-  double med = median(rss);
-  cout << med << endl;
+//  vector<double> rss;
+//  for(unsigned int i = 0; i < initPose.size(); i++ ) {
+//    Point2 err = initPose[i].translation() - finalPose[i].translation();
+//    double e = sqrt( pow( err.x(),2) + pow(err.y(),2) ); 
+//    rss.push_back( e );
+//  }
+
+//  double med = median(rss);
+//  cout << med << endl;
 
   return 0;
 }

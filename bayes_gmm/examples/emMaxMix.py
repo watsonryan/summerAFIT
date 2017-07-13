@@ -82,6 +82,7 @@ def main(argv):
   for k in xrange(igmm.components.K):
     mu, sigma = igmm.components.rand_k(k)
     mixture =  np.vstack( [mixture, np.reshape( sigma, ( 1, sigma.size ) ) ] )
+  np.savetxt( 'mixtureModel.txt', mixture, delimiter=',' )
 
   ##############################################################################
   # 3) Re-optimize Using Max-Mixture 
