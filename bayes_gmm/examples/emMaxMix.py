@@ -46,6 +46,7 @@ def main(argv):
   ##############################################################################
   # 1) Run L2 optimization over initial pose graph
   ##############################################################################
+
   residuals = []
   if args.true :
       cmd = [args.script, '-i', args.input, '-t', args.true]
@@ -88,6 +89,17 @@ def main(argv):
   # 3) Re-optimize Using Max-Mixture 
   ##############################################################################
 
+  residuals = []
+  if args.true :
+      cmd = ['../../gtsam/build/examples/maxmixG2O', '-i', args.input, '-t', args.true, '-m', 'mixtureModel.txt']
+  else :
+      cmd = ['../../gtsam/build/examples/maxmixG2O', '-i', args.input, '-m', 'mixtureModel.txt']
+
+  proc1 = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  rsos, err = proc1.communicate()
+
+  print '\n\n\n'
+  print rsos
 
 if __name__=="__main__":
   main(sys.argv[1:])

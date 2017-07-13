@@ -43,18 +43,17 @@ namespace gtsam {
 
           double m1 = this->noiseModel_->distance(error);
           Matrix info1(g1->information());
-          double nu1 = 1.0/sqrt( (info1.inverse()).determinant());
+          double nu1 = 1.0/sqrt(inverse(info1).determinant());
           double l1 = nu1 * exp(-0.5*m1);
 
           double m2 = nullHypothesisModel->distance(error);
           Matrix info2(g2->information());
-          double nu2 = 1.0/sqrt((info2.inverse()).determinant());
+          double nu2 = 1.0/sqrt(inverse(info2).determinant());
           double l2 = nu2 * exp(-0.5*m2);
 
           // Remove this weight later. This was calculated 
-          // externally by taking forbenius( hyp-null )
-          Matrix diff = (Matrix(3,3) << hypVec - nullVec).finished();
-          double weight = 1/diff.norm();
+          // externally by taking forbenius( hyp-null ) 
+          double weight = 0.00037063;
           if (l2>l1) {
             if (H1) *H1 = *H1 * weight;
             if (H2) *H2 = *H2 * weight;

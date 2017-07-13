@@ -121,55 +121,56 @@ int main(const int argc, const char *argv[]) {
   }
   model.close();
   
-  cout << mixture << endl;
+  Vector hyp = mixture.row(0);
+  Vector null = mixture.row(1);
 
-//  auto hypothesis = noiseModel::Gaussian::Covariance( 
-//    ( Matrix(3,3) << hyp ).finished() );
-//  auto null_model = noiseModel::Gaussian::Covariance( 
-//    ( Matrix(3,3) << null ).finished() );
+  auto hypothesis = noiseModel::Gaussian::Covariance( 
+    ( Matrix(3,3) << hyp ).finished() );
+  auto null_model = noiseModel::Gaussian::Covariance( 
+    ( Matrix(3,3) << null ).finished() );
 
-//  ifstream is(g2oFile.c_str());
-//  string tag;
-//  Key id1, id2;
-//  while ( !is.eof() ) {
-//    if (!(is >> tag)) { break; }
-//    if ((tag == "EDGE2") || (tag == "EDGE") || (tag == "EDGE_SE2")
-//        || (tag == "ODOMETRY")) {
-//      double x, y, yaw;
-//      is >> id1 >> id2 >> x >> y >> yaw;
-//      Pose2 l1Xl2(x, y, yaw);
-//      NonlinearFactor::shared_ptr factor(
-//          new BetweenFactorMaxMix<Pose2>(id1, id2, l1Xl2, hypothesis, null_model,
-//            hyp, null ));
-//      mixGraph.add(factor);
-//    }
-//  }
-//  Values resultMix = GaussNewtonOptimizer(mixGraph, *initial).optimize();  
+  ifstream is(g2oFile.c_str());
+  string tag;
+  Key id1, id2;
+  while ( !is.eof() ) {
+    if (!(is >> tag)) { break; }
+    if ((tag == "EDGE2") || (tag == "EDGE") || (tag == "EDGE_SE2")
+        || (tag == "ODOMETRY")) {
+      double x, y, yaw;
+      is >> id1 >> id2 >> x >> y >> yaw;
+      Pose2 l1Xl2(x, y, yaw);
+      NonlinearFactor::shared_ptr factor(
+          new BetweenFactorMaxMix<Pose2>(id1, id2, l1Xl2, hypothesis, null_model,
+            hyp, null ));
+      mixGraph.add(factor);
+    }
+  }
+  Values resultMix = GaussNewtonOptimizer(mixGraph, *initial).optimize();  
 
-//	vector<Pose2> finalPose, initPose;
-//	Values::ConstFiltered<Pose2> result_poses = resultMix.filter<Pose2>();
-//	foreach (const Values::ConstFiltered<Pose2>::KeyValuePair& key_value, result_poses) {
-//    Pose2 q = key_value.value;
-//    finalPose.push_back(q);
-//		}
+	vector<Pose2> finalPose, initPose;
+	Values::ConstFiltered<Pose2> result_poses = resultMix.filter<Pose2>();
+	foreach (const Values::ConstFiltered<Pose2>::KeyValuePair& key_value, result_poses) {
+    Pose2 q = key_value.value;
+    finalPose.push_back(q);
+		}
 
-//  if ( !truePose.empty() ) { boost::tie(graph, initial) = readG2o(truePose,is3D); }
+  if ( !truePose.empty() ) { boost::tie(graph, initial) = readG2o(truePose,is3D); }
 
-//	Values::ConstFiltered<Pose2> init_poses = initial->filter<Pose2>();
-//	foreach (const Values::ConstFiltered<Pose2>::KeyValuePair& key_value, init_poses) {
-//    Pose2 q = key_value.value;
-//    initPose.push_back(q);
-//  }
+	Values::ConstFiltered<Pose2> init_poses = initial->filter<Pose2>();
+	foreach (const Values::ConstFiltered<Pose2>::KeyValuePair& key_value, init_poses) {
+    Pose2 q = key_value.value;
+    initPose.push_back(q);
+  }
 
-//  vector<double> rss;
-//  for(unsigned int i = 0; i < initPose.size(); i++ ) {
-//    Point2 err = initPose[i].translation() - finalPose[i].translation();
-//    double e = sqrt( pow( err.x(),2) + pow(err.y(),2) ); 
-//    rss.push_back( e );
-//  }
+  vector<double> rss;
+  for(unsigned int i = 0; i < initPose.size(); i++ ) {
+    Point2 err = initPose[i].translation() - finalPose[i].translation();
+    double e = sqrt( pow( err.x(),2) + pow(err.y(),2) ); 
+    rss.push_back( e );
+  }
 
-//  double med = median(rss);
-//  cout << med << endl;
+  double med = median(rss);
+  cout << med << endl;
 
   return 0;
 }
