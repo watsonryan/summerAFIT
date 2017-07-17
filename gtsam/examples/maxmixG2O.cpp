@@ -125,8 +125,8 @@ int main(const int argc, const char *argv[]) {
 
   Vector hyp, null;
   if ( mixture.rows() > 2 ) {
-    hyp = mixture.row(1);
-    null = mixture.row(2);
+    hyp = mixture.row(0);
+    null = mixture.row( mixture.rows()-1 );
     auto hypothesis = noiseModel::Gaussian::Covariance(
     ( Matrix(3,3) << hyp ).finished() );
     auto null_model = noiseModel::Gaussian::Covariance(

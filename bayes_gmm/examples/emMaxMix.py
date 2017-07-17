@@ -92,8 +92,11 @@ def main(argv):
     mu, sigma = igmm.components.rand_k(k)
     if ( is_pos_def(sigma) ):
       mixture =  np.vstack( [mixture, np.reshape( sigma, ( 1, sigma.size ) ) ] )
-  mixture.sort(axis=0)
+    else:
+      print " Non P.D. Matrix " , sigma 
+  mixture = np.array(sorted(mixture,key=tuple))
   np.savetxt( 'mixtureModel.txt', mixture, delimiter=',' )
+
   ##############################################################################
   # 3) Re-optimize Using Max-Mixture
   ##############################################################################
@@ -109,6 +112,7 @@ def main(argv):
 
   print '\n\n\n'
   print " The RSOS error is :: ", rsos
+  print '\n\n\n'
 
 if __name__=="__main__":
   main(sys.argv[1:])
