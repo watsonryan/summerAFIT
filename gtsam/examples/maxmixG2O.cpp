@@ -107,7 +107,7 @@ int main(const int argc, const char *argv[]) {
   string STRING;
   Matrix mixture(3,9);
   Vector9 vec;
-  double sc(3.0); 
+  double sc(1.0); 
   vector<float> tv;
   int i=0;
 	ifstream model(mixModel);
@@ -124,7 +124,7 @@ int main(const int argc, const char *argv[]) {
   model.close();
 
   Vector hyp, null;
-  if ( mixture.rows() > 2 ) {
+//  if ( mixture.rows() > 2 ) {
     hyp = mixture.row(0);
     null = mixture.row( mixture.rows()-1 );
     auto hypothesis = noiseModel::Gaussian::Covariance(
@@ -162,15 +162,18 @@ int main(const int argc, const char *argv[]) {
       initPose.push_back(q);
     }
 
+    ofstream res ("rsosError.txt");
     vector<double> rss;
     for(unsigned int i = 0; i < initPose.size(); i++ ) {
       Point2 err = initPose[i].translation() - finalPose[i].translation();
       double e = sqrt( pow( err.x(),2) + pow(err.y(),2) );
+      res << e << "\n" ; 
       rss.push_back( e );
     }
+    res.close();
 
     double med = median(rss);
     cout << med << endl;
-  } else{ cout << "Only One Mixture Component " << endl; return 0; }
+//  } else{ cout << "Only One Mixture Component " << endl; return 0; }
   return 0;
 }
