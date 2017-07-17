@@ -8,7 +8,7 @@ with E.M. estimated mixture components.
 __author__ = 'ryan'
 __email__ = "rwatso12@gmail.com"
 
-
+import warnings
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -25,6 +25,8 @@ def is_pos_def(x):
 
 
 def main(argv):
+
+  warnings.filterwarnings("ignore")
 
   # Add command line interface
   parser = argparse.ArgumentParser(description="Scrit to test pose graph  "
@@ -106,7 +108,7 @@ def main(argv):
   rsos, err = proc1.communicate()
 
   print '\n\n\n'
-  print rsos
+  print " The RSOS error is :: ", rsos
 
 if __name__=="__main__":
   main(sys.argv[1:])

@@ -4,7 +4,6 @@
  *  @brief  Header file for between factor with max mixtures
  *
  * This needs a re-write.
-    * Should not explicitly write out mixture components.
     * Should not have to pass vec and noise model.
  */
 
@@ -51,8 +50,6 @@ namespace gtsam {
           double nu2 = 1.0/sqrt(inverse(info2).determinant());
           double l2 = nu2 * exp(-0.5*m2);
 
-          // Remove this weight later. This was calculated
-          // externally by taking forbenius( hyp-null )
           Matrix diff = (Matrix(3,3) << hypVec - nullVec).finished();
           double weight = 1/diff.norm();
           if (l2>l1) {

@@ -9,8 +9,8 @@ Date: 2013, 2014
 """
 
 import math
-import numpy as np
 import random
+import numpy as np
 
 
 def wishrnd(sigma, v_0, C=None):
