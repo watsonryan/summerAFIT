@@ -3,9 +3,9 @@
  *  @author Ryan
  *  @brief  Header file for between factor with max mixtures
  *
- * This needs a re-write. 
+ * This needs a re-write.
     * Should not explicitly write out mixture components.
-    * Should not have to pass vec and noise model. 
+    * Should not have to pass vec and noise model.
  */
 
 #include <Eigen/Eigen>
@@ -19,10 +19,10 @@ namespace gtsam {
   {
     public:
       BetweenFactorMaxMix() {};
-      BetweenFactorMaxMix(Key key1, Key key2, const VALUE& measured, 
-        const SharedNoiseModel& model, const SharedNoiseModel& model2, 
+      BetweenFactorMaxMix(Key key1, Key key2, const VALUE& measured,
+        const SharedNoiseModel& model, const SharedNoiseModel& model2,
         const Vector& hyp, const Vector& null)
-          : NoiseModelFactor2<VALUE, VALUE>(model, key1, key2), 
+          : NoiseModelFactor2<VALUE, VALUE>(model, key1, key2),
           nullHypothesisModel(model2), hypVec(hyp), nullVec(null),
         betweenFactor(key1, key2, measured, model)  {   };
 
@@ -35,7 +35,7 @@ namespace gtsam {
           Vector error = betweenFactor.evaluateError(p1, p2, H1, H2);
 
           // which hypothesis is more likely
-          auto g1 = noiseModel::Gaussian::Covariance( 
+          auto g1 = noiseModel::Gaussian::Covariance(
             ( Matrix(3,3) << hypVec ).finished() );
 
           auto g2 = noiseModel::Gaussian::Covariance(
@@ -51,9 +51,10 @@ namespace gtsam {
           double nu2 = 1.0/sqrt(inverse(info2).determinant());
           double l2 = nu2 * exp(-0.5*m2);
 
-          // Remove this weight later. This was calculated 
-          // externally by taking forbenius( hyp-null ) 
-          double weight = 0.00037063;
+          // Remove this weight later. This was calculated
+          // externally by taking forbenius( hyp-null )
+          Matrix diff = (Matrix(3,3) << hypVec - nullVec).finished();
+          double weight = 1/diff.norm();
           if (l2>l1) {
             if (H1) *H1 = *H1 * weight;
             if (H2) *H2 = *H2 * weight;
