@@ -63,7 +63,7 @@ def main(argv):
       print ' '.join(cmd)
   else :
       cmd = [args.script, '-i', args.input]
-      print '\n'*3 
+      print '\n'*3
       print ' '.join(cmd)
 
   proc1 = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -100,36 +100,43 @@ def main(argv):
   mixture = 3. * mixture
   np.savetxt( 'mixtureModel.txt', mixture, delimiter=',' )
 
-  mixInv = np.array([]).reshape(0,9)
+  mixInv = np.array([]).reshape(0,6)
   for i in range(0, mixture.shape[0]):
     mixTmp = np.linalg.inv( mixture[i].reshape(3,3)  )
-    mixInv =  np.vstack( [mixInv, np.reshape( mixTmp, ( 1, mixTmp.size ) ) ] )    
+    mixTmp = np.reshape( mixTmp, (1, mixTmp.size) )
+    mixTmp = np.array([mixTmp[0][0],mixTmp[0][1],mixTmp[0][2],mixTmp[0][4],mixTmp[0][5],mixTmp[0][8]])
+    mixInv =  np.vstack( [mixInv, mixTmp] )
 
 
   ##############################################################################
-  # 3) Write line for G2O mixture model 
+  # 3) Write line for G2O mixture model
   ##############################################################################
 
   f = open(args.input,'r')
-  g = open(args.out,'w') 
+  g = open(args.out,'w')
   for lines in f:
     splitLine = lines.split()
     if splitLine[0] == "EDGE_SE2":
       index = splitLine[1:3]
+      meas = splitLine[3:6]
       splitLine[0] = splitLine[0]+"_MIXTURE"
       splitLine[3] = str(k+1)
-      splitLine[4] = "EDGE_SE2"s
+      splitLine[4] = "EDGE_SE2"
       splitLine[5] = str(1)
       splitLine[6:7] = index
-      splitLine[8:16] = map(str, mixInv[0]) 
+      splitLine[8:10] = meas
+      splitLine[11:20] = map(str, mixInv[0])
       for x in range(1, k+1):
         splitLine.append("EDGE_SE2")
         splitLine.append( str( 1. / np.linalg.norm( mixture[0] - mixture[x] ) ) )
         splitLine.append( ' '.join(index) )
+        splitLine.append( ' '.join(meas) )
         splitLine.append( ' '.join( map(str, mixInv[x]) ) )
       g.write(' '.join(splitLine)+ '\n')
     else:
-      g.write(' '.join(splitLine) + '\n') 
+      g.write(' '.join(splitLine) + '\n')
+  f.close()
+  g.close()
 
 if __name__=="__main__":
   main(sys.argv[1:])
