@@ -50,7 +50,6 @@ double NonlinearFactorGraph::probPrime(const Values& values) const {
 
 /* ************************************************************************* */
 void NonlinearFactorGraph::print(const std::string& str, const KeyFormatter& keyFormatter) const {
-  cout << str << "size: " << size() << endl << endl;
   for (size_t i = 0; i < factors_.size(); i++) {
     stringstream ss;
     ss << "Factor " << i << ": ";
@@ -85,6 +84,7 @@ void NonlinearFactorGraph::printRes(const Values& values, const std::string& str
     if (factors_[i] == NULL) {
       cout << "NULL" << endl;
     } else {
+     // factors_[i]->print(ss.str(), keyFormatter);
       cout << (factors_[i]->residual(values)).transpose();
     }
     cout << endl;

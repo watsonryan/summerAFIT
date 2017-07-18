@@ -107,6 +107,16 @@ def main(argv):
     mixTmp = np.array([mixTmp[0][0],mixTmp[0][1],mixTmp[0][2],mixTmp[0][4],mixTmp[0][5],mixTmp[0][8]])
     mixInv =  np.vstack( [mixInv, mixTmp] )
 
+  count = 0
+  outKey = []
+  residuals = np.loadtxt('residuals.txt')
+  keys = np.loadtxt('factor.keys')
+  for lines in residuals:
+    rsos = np.inner( residuals[count], residuals[count] )
+    if (rsos > 7.0):
+      outKey.append(keys[count])
+    count = count + 1
+  outKey = [map(int, x) for x in outKey]
 
   ##############################################################################
   # 3) Write line for G2O mixture model
@@ -114,25 +124,31 @@ def main(argv):
 
   f = open(args.input,'r')
   g = open(args.out,'w')
+  count = 0
   for lines in f:
     splitLine = lines.split()
     if splitLine[0] == "EDGE_SE2":
-      index = splitLine[1:3]
-      meas = splitLine[3:6]
-      splitLine[0] = splitLine[0]+"_MIXTURE"
-      splitLine[3] = str(k+1)
-      splitLine[4] = "EDGE_SE2"
-      splitLine[5] = str(1)
-      splitLine[6:7] = index
-      splitLine[8:10] = meas
-      splitLine[11:20] = map(str, mixInv[0])
-      for x in range(1, k+1):
-        splitLine.append("EDGE_SE2")
-        splitLine.append( str( 1. / np.linalg.norm( mixture[0] - mixture[x] ) ) )
-        splitLine.append( ' '.join(index) )
-        splitLine.append( ' '.join(meas) )
-        splitLine.append( ' '.join( map(str, mixInv[x]) ) )
-      g.write(' '.join(splitLine)+ '\n')
+      if outKey[count][0] == int(splitLine[1]) and outKey[count][1] == int(splitLine[2]):
+        count = count + 1
+        index = splitLine[1:3]
+        meas = splitLine[3:6]
+        splitLine[0] = splitLine[0]+"_MIXTURE"
+        splitLine[3] = str(k+1)
+        splitLine[4] = "EDGE_SE2"
+        splitLine[5] = str(1)
+        splitLine[6:7] = index
+        splitLine[8:10] = meas
+        splitLine[11:20] = map(str, mixInv[0])
+        for x in range(1, k+1):
+          splitLine.append("EDGE_SE2")
+          splitLine.append( str( 1. / np.linalg.norm( mixInv[0] - mixInv[x] ) ) )
+          splitLine.append( ' '.join(index) )
+          splitLine.append( ' '.join(meas) )
+          splitLine.append( ' '.join( map(str, mixInv[x]) ) )
+        g.write(' '.join(splitLine)+ '\n')
+      else:
+        splitLine[6:12] = map(str, mixInv[0])
+        g.write(' '.join(splitLine) + '\n')
     else:
       g.write(' '.join(splitLine) + '\n')
   f.close()
