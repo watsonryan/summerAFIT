@@ -23,7 +23,6 @@ from bayes_gmm.igmm import IGMM
 def is_pos_def(x):
   return np.all(np.linalg.eigvals(x) > 0)
 
-
 def main(argv):
 
   warnings.filterwarnings("ignore")
@@ -32,7 +31,6 @@ def main(argv):
   parser = argparse.ArgumentParser(description="Scrit to test pose graph  "
                                   "optimization using Max-Mixtures robust noise"
                                   "model with E.M. estimated mixture components")
-
   parser.add_argument('-i', '--inputFile', dest='input',
                      default='../../poseGraphs/manhattanOlson3500.g2o',
                      help="Define the input pose graph")
@@ -59,12 +57,8 @@ def main(argv):
   residuals = []
   if args.true :
       cmd = [args.script, '-i', args.input, '-t', args.true]
-      print '\n'*3
-      print ' '.join(cmd)
   else :
       cmd = [args.script, '-i', args.input]
-      print '\n'*3
-      print ' '.join(cmd)
 
   proc1 = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   residuals, err = proc1.communicate()
@@ -78,12 +72,14 @@ def main(argv):
   np.savetxt( 'residuals.txt', residuals)
   D = min( residuals.shape )
   # Intialize prior
-  mu_scale = 1.
-  covar_scale = 1.
-  m_0 = np.zeros(D)
-  k_0 = covar_scale**2/mu_scale**2
+  m_0 = np.mean(residuals,axis=0)
+  k_0 = 1.
   v_0 = D + 3
+  covar_scale = 1.
+#  v_0 = 3. * np.sqrt( np.std( residuals, axis=0 ) )
   S_0 = covar_scale**2*v_0*np.eye(D)
+#  S_0 = np.array([ [0.02,0,0],[0,0.02,0],[0,0,0.01] ])
+# S_0 = np.array([ [0.02,0,0],[0,0.02,0],[0,0,0.01] ] )
   prior = NIW(m_0, k_0, v_0, S_0)
 
   # Setup IGMM
@@ -96,8 +92,7 @@ def main(argv):
   for k in xrange(igmm.components.K):
     mu, sigma = igmm.components.rand_k(k)
     mixture =  np.vstack( [mixture, np.reshape( sigma, ( 1, sigma.size ) ) ] )
-  mixture = np.array(sorted(mixture,key=tuple))
-  mixture = 3. * mixture
+  mixture =  np.array(sorted(mixture,key=tuple))
   np.savetxt( 'mixtureModel.txt', mixture, delimiter=',' )
 
   mixInv = np.array([]).reshape(0,6)
@@ -113,13 +108,11 @@ def main(argv):
   keys = np.loadtxt('factor.keys')
   for lines in residuals:
     rsos = np.inner( residuals[count], residuals[count] )
-    if (rsos > 7.0):
+    if (rsos > 0.0):
       outKey.append(keys[count])
     count = count + 1
   outKey = [map(int, x) for x in outKey]
 
-  ##############################################################################
-  # 3) Write line for G2O mixture model
   ##############################################################################
 
   f = open(args.input,'r')
@@ -128,27 +121,27 @@ def main(argv):
   for lines in f:
     splitLine = lines.split()
     if splitLine[0] == "EDGE_SE2":
-      if outKey[count][0] == int(splitLine[1]) and outKey[count][1] == int(splitLine[2]):
-        count = count + 1
-        index = splitLine[1:3]
-        meas = splitLine[3:6]
-        splitLine[0] = splitLine[0]+"_MIXTURE"
-        splitLine[3] = str(k+1)
-        splitLine[4] = "EDGE_SE2"
-        splitLine[5] = str(1)
-        splitLine[6:7] = index
-        splitLine[8:10] = meas
-        splitLine[11:20] = map(str, mixInv[0])
-        for x in range(1, k+1):
-          splitLine.append("EDGE_SE2")
-          splitLine.append( str( 1. / np.linalg.norm( mixInv[0] - mixInv[x] ) ) )
-          splitLine.append( ' '.join(index) )
-          splitLine.append( ' '.join(meas) )
-          splitLine.append( ' '.join( map(str, mixInv[x]) ) )
-        g.write(' '.join(splitLine)+ '\n')
-      else:
-        splitLine[6:12] = map(str, mixInv[0])
-        g.write(' '.join(splitLine) + '\n')
+#      if outKey[count][0] == int(splitLine[1]) and outKey[count][1] == int(splitLine[2]):
+      count = count + 1
+      index = splitLine[1:3]
+      meas = splitLine[3:6]
+      splitLine[0] = splitLine[0]+"_MIXTURE"
+      splitLine[3] = str(k+1)
+      splitLine[4] = "EDGE_SE2"
+      splitLine[5] = str(1)
+      splitLine[6:7] = index
+      splitLine[8:10] = meas
+      splitLine[11:20] = map(str, mixInv[0])
+      for x in range(1, k+1):
+        splitLine.append("EDGE_SE2")
+        splitLine.append( str( 1e-5*( 1. / np.linalg.norm( mixInv[0] -  mixInv[x] ) ) ) )
+        splitLine.append( ' '.join(index) )
+        splitLine.append( ' '.join(meas) )
+        splitLine.append( ' '.join( map(str, 1e-5 * mixInv[x]) ) )
+      g.write(' '.join(splitLine)+ '\n')
+#      else:
+#        splitLine[6:12] = map(str, mixInv[0])
+#        g.write(' '.join(splitLine) + '\n')
     else:
       g.write(' '.join(splitLine) + '\n')
   f.close()

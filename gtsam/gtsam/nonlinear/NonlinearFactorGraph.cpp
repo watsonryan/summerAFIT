@@ -84,7 +84,7 @@ void NonlinearFactorGraph::printRes(const Values& values, const std::string& str
     if (factors_[i] == NULL) {
       cout << "NULL" << endl;
     } else {
-     // factors_[i]->print(ss.str(), keyFormatter);
+//      factors_[i]->print(ss.str(), keyFormatter);
       cout << (factors_[i]->residual(values)).transpose();
     }
     cout << endl;

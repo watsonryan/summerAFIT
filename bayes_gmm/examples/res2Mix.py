@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 
 '''
-Scrit to test pose graph optimization using Max-Mixtures robust noise model
-with E.M. estimated mixture components.
+Scrit to generate mixture model from file of residuals
 '''
 
 __author__ = 'ryan'
@@ -36,12 +35,6 @@ def main(argv):
   parser.add_argument('-i', '--inputFile', dest='input',
                      default='../../poseGraphs/manhattanOlson3500.g2o',
                      help="Define the input pose graph")
-  parser.add_argument('-t', '--truePose', dest='true',
-                     default='',
-                     help="Define the true pose graph")
-  parser.add_argument('-s', '--script', dest='script',
-                    default='./../../gtsam/build/examples/processG2O',
-                    help="What's the GTSAM script used to process the graph")
   parser.add_argument('-a', '--alpha', dest='alpha', default=1e-6, type=float,
                       help="What's the value of the Dirichlet hyper-parameter?")
   parser.add_argument('-n', '--iterations', dest='iterations', default=10, type=int,
@@ -51,29 +44,10 @@ def main(argv):
   args = parser.parse_args()
 
   ##############################################################################
-  # 1) Run L2 optimization over initial pose graph
-  ##############################################################################
-
-  residuals = []
-  if args.true :
-      cmd = [args.script, '-i', args.input, '-t', args.true]
-      print '\n'*3
-      print ' '.join(cmd)
-  else :
-      cmd = [args.script, '-i', args.input]
-      print '\n'*3
-      print ' '.join(cmd)
-
-  proc1 = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-  residuals, err = proc1.communicate()
-
-  ##############################################################################
   # 2) Use IGMM To Calculate Mixture Model
   ##############################################################################
 
-  residuals = (map(float, residuals.split() ))
-  residuals = np.reshape( residuals, (len(residuals)/3, 3) )
-  np.savetxt( 'residuals.txt', residuals)
+  residuals = np.loadtxt(args.input)
   D = min( residuals.shape )
   # Intialize prior
   mu_scale = 1.
@@ -97,32 +71,9 @@ def main(argv):
     if ( is_pos_def(sigma) ):
       mixture =  np.vstack( [mixture, np.reshape( sigma, ( 1, sigma.size ) ) ] )
     else:
-      print " Non P.D. Matrix " , sigma
+      print " Non P.D. Matrix " , sigma 
   mixture = np.array(sorted(mixture,key=tuple))
   np.savetxt( 'mixtureModel.txt', mixture, delimiter=',' )
-
-  ##############################################################################
-  # 3) Re-optimize Using Max-Mixture
-  ##############################################################################
-
-  residuals = []
-  if args.true :
-      cmd = ['../../gtsam/build/examples/maxmixG2O', '-i', args.input, '-t', args.true, '-m', 'mixtureModel.txt']
-      print '\n'*3
-      print ' '.join(cmd)
-      print '\n'*3
-
-  else :
-      cmd = ['../../gtsam/build/examples/maxmixG2O', '-i', args.input, '-m', 'mixtureModel.txt']
-      print '\n'*3
-      print ' '.join(cmd)
-      print '\n'*3
-
-  proc1 = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-  rsos, err = proc1.communicate()
-
-  print " The RSOS error is :: ", rsos
-  print '\n'*3
 
 if __name__=="__main__":
   main(sys.argv[1:])

@@ -5,11 +5,15 @@ PROJECT(g2o_max_mixture)
 SET(CMAKE_DEBUG true)
 SET(MIXG2O_LIB_PREFIX g2o_max_mix_)
 
+if(UNIX)
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=gnu++0x")
+endif()
+
 SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/lib")
 SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
 
 #Set G2O_ROOT env variable to help find g2o package. Eigen3 find package uses g2o cmake module
-set(CMAKE_MODULE_PATH  ${CMAKE_MODULE_PATH} $ENV{G2O_ROOT}/cmake_modules) 
+set(CMAKE_MODULE_PATH  ${CMAKE_MODULE_PATH} $ENV{G2O_ROOT}/cmake_modules)
 message(STATUS ${CMAKE_MODULE_PATH})
 FIND_PACKAGE(G2O REQUIRED)
 FIND_PACKAGE(Eigen3 REQUIRED)
@@ -25,19 +29,19 @@ if(G2O_FOUND)
     else(G2O_INCLUDE_DIR)
         message(STATUS "G2O include dir not found")
     endif()
-    
+
     if(G2O_TYPES_SLAM2D)
         message(STATUS "G2O_TYPES_SLAM2D lib is ${G2O_TYPES_SLAM2D}")
     else(G2O_TYPES_SLAM2D)
         message(STAUS "G2O_TYPES_SLAM2D Not found")
     endif()
-    
+
     if(G2O_TYPES_SLAM3D)
         message(STATUS "G2O_TYPES_SLAM3D lib is ${G2O_TYPES_SLAM3D}")
     else(G2O_TYPES_SLAM3D)
         message(STAUS "G2O_TYPES_SLAM3D not found")
     endif()
-   
+
     if(G2O_STUFF_LIBRARY)
         message(STATUS " G2O_STUFF_LIBS lib is ${G2O_STUFF_LIBRARY}")
     else(G2O_STUFF_LIBRARY)
@@ -51,8 +55,8 @@ if(G2O_FOUND)
     endif()
 
 
-    #required for g2o/config.h 
-    #It assumes the outof core built was used. 
+    #required for g2o/config.h
+    #It assumes the outof core built was used.
     set(G2O_BUILD_DIR ${G2O_INCLUDE_DIR}/build)
 
     set(G2O_ALL_LIBS ${G2O_TYPES_SLAM2D} ${G2O_TYPES_SLAM3D} ${G2O_CORE_LIBRARY} ${G2O_STUFF_LIBRARY})
@@ -60,7 +64,7 @@ if(G2O_FOUND)
     MESSAGE(STATUS "Found g2o")
     add_subdirectory(src)
 else()
-    MESSAGE(STATUS "Didnot find g2o") 
+    MESSAGE(STATUS "Didnot find g2o")
 endif()
 
 
