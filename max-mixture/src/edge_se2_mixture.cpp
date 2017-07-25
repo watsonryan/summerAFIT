@@ -53,54 +53,54 @@ void EdgeSE2Mixture::initializeComponents(std::vector< g2o::EdgeSE2* >& _edges, 
 {
   this->allEdges = _edges;
   this->weights = _weights;
-  
+
   numberComponents = _edges.size();
    for(unsigned int i=0;i<numberComponents;i++)
-     determinants.push_back(allEdges[i]->information().inverse().determinant());    
-   
+     determinants.push_back(allEdges[i]->information().inverse().determinant());
+
    //ToDO: best
   //UpdateBelief(0);
-    computeBestEdge(); 
+    computeBestEdge();
 }
 
 void EdgeSE2Mixture::UpdateBelief(int i)
 {
-  //required for multimodal max-mixtures, for inlier/outliers the vertices would not change 
+  //required for multimodal max-mixtures, for inlier/outliers the vertices would not change
   this->setVertex(0,allEdges[i]->vertex(0));
-  this->setVertex(1,allEdges[i]->vertex(1));           
-  
+  this->setVertex(1,allEdges[i]->vertex(1));
+
   double p[3];
   allEdges[i]->getMeasurementData(p);
   this->setMeasurement(g2o::SE2(p[0],p[1],p[2]));
-  this->setInformation(allEdges[i]->information());  
+  this->setInformation(allEdges[i]->information());
 }
 
-//get the edge with max probability 
+//get the edge with max probability
 void EdgeSE2Mixture::computeError()
-{ 
+{
   int best = -1;
   double minError = numeric_limits<double>::max();
-  for(unsigned int i=0;i<numberComponents;i++){    
+  for(unsigned int i=0;i<numberComponents;i++){
     double thisNegLogProb = getNegLogProb(i);
     if(minError>thisNegLogProb){
       best = i;
       minError = thisNegLogProb;
     }
-  } 
-  
+  }
+
   bestComponent = best;
   UpdateBelief(bestComponent);
-  //cerr << "\nBest component is "<<bestComponent<<"\n";
-  
+  cout << "\nBest component is "<<bestComponent<<"\n";
+
   //this will be used by the optimizer
   g2o::EdgeSE2::computeError();
 }
 
 double EdgeSE2Mixture::getNegLogProb(unsigned int c)
-{  
-  allEdges[c]->computeError(); 
+{
+  allEdges[c]->computeError();
   //cerr << "\nchi2 for " <<c<<" "<< allEdges[c]->chi2();
-  return -log(weights[c]) + 
+  return -log(weights[c]) +
 	  0.5*log(determinants[c]) +
 	  0.5*allEdges[c]->chi2();
 }
@@ -108,11 +108,10 @@ double EdgeSE2Mixture::getNegLogProb(unsigned int c)
 void EdgeSE2Mixture::linearizeOplus()
 {
   EdgeSE2Mixture::computeError();
-  //the best component must be updated here 
+  //the best component must be updated here
   //else computeError can be called
-  
-  //UpdateBelief(bestComponent); //already done in compute error
-  g2o::EdgeSE2::linearizeOplus();    
+
+  g2o::EdgeSE2::linearizeOplus();
 }
 
 int EdgeSE2Mixture::getBestComponent() const
@@ -125,45 +124,43 @@ void EdgeSE2Mixture::computeBestEdge()
   computeError();
 }
 
-//note g2o takes care of creating the first two vertices 
-//its problematic since all edges are taken care in this way 
-//EDGE_SE2_MIXTURE va vb numComponents Edgetype_i w_i na_i nb_i 
+//note g2o takes care of creating the first two vertices
+//its problematic since all edges are taken care in this way
+//EDGE_SE2_MIXTURE va vb numComponents Edgetype_i w_i na_i nb_i
 bool EdgeSE2Mixture::read(std::istream& is)
 {
 
   is >> numberComponents;
-  
-  allEdges.reserve(numberComponents);  
-  weights.reserve(numberComponents);  
+
+  allEdges.reserve(numberComponents);
+  weights.reserve(numberComponents);
   determinants.reserve(numberComponents);
-  
+
   Vector3d p;
   double w;
-  
+
   VertexSE2* va = static_cast<VertexSE2*>(this->vertex(0));
-  
+
   for(int c=0;c<numberComponents;c++){
-    EdgeSE2* e = new EdgeSE2;    
+    EdgeSE2* e = new EdgeSE2;
     allEdges.push_back(e);
     std::string buf;
-    is >> buf;    
-    is>> w;        
+    is >> buf;
+    is>> w;
     weights.push_back(w);
     int na,nb;
     is >> na;
     is >> nb;
-    
+
     VertexSE2* v0 = static_cast<VertexSE2*>(va->graph()->vertex(na));
     VertexSE2* v1 = static_cast<VertexSE2*>(va->graph()->vertex(nb));
     assert(v0!=NULL);
     assert(v1!=NULL);
     allEdges[c]->setVertex(0,v0);
-  allEdges[c]->setVertex(1,v1);
-        
-    //vertexPairs.push_back(std::pair<int,int>(na,nb));                
-    //is>> weights[c];      
+    allEdges[c]->setVertex(1,v1);
+
+    //vertexPairs.push_back(std::pair<int,int>(na,nb));
     is >> p[0] >> p[1] >> p[2];
-    //cerr<<"\nMeasurement "<< p[0] <<" " <<p[1]<<" "<< p[2] <<" ";    
     allEdges[c]->setMeasurement(g2o::SE2(p));
     InformationType inf;
     for (int i = 0; i < 3; ++i)
@@ -172,12 +169,12 @@ bool EdgeSE2Mixture::read(std::istream& is)
 	if (i != j)
 	  inf(j, i) = inf(i, j);
       }
-      allEdges[c]->setInformation(inf);      
+      allEdges[c]->setInformation(inf);
   }
-    
+
   for(unsigned int i=0;i<numberComponents;i++)
      determinants.push_back(allEdges[i]->information().inverse().determinant());
-  
+
   //UpdateBelief(0);
   computeBestEdge();
   return is.good();
@@ -187,25 +184,21 @@ bool EdgeSE2Mixture::write(std::ostream& os) const
 {
   os << numberComponents << " ";
   g2o::Factory* factory = g2o::Factory::instance();
-  
+
   double p[3];
-  //cerr <<"\n";
   for(int c=0;c<numberComponents;c++){
     os<<factory->tag(allEdges[c])<<" ";
     os<< weights[c]<<" ";
-    //cerr<< "Writing component "<< c << " ";
-    os<<allEdges[c]->vertex(0)->id()<<" "; 
+    os<<allEdges[c]->vertex(0)->id()<<" ";
     os<<allEdges[c]->vertex(1)->id()<<" ";
-    //os >> this->_vertices[0]->id()<<" ";
-    //os << this->_vertices[1]->id()<< " ";
-    
+
     allEdges[c]->getMeasurementData(p);
     os<<p[0] <<" " <<p[1]<<" "<< p[2] <<" ";
-    InformationType inf;    
+    InformationType inf;
     for (int i = 0; i < 3; ++i)
-      for (int j = i; j < 3; ++j)	
+      for (int j = i; j < 3; ++j)
 	os << " " << allEdges[c]->information()(i, j);
-      
+
       os<<" ";
   }
   return os.good();
@@ -219,8 +212,8 @@ EdgeSE2* EdgeSE2Mixture::getComponent(int i)
 
   #ifdef G2O_HAVE_OPENGL
   EdgeSE2MixtureDrawAction::EdgeSE2MixtureDrawAction(): DrawAction(typeid(EdgeSE2Mixture).name()){}
-  
-   HyperGraphElementAction* EdgeSE2MixtureDrawAction::operator()(HyperGraph::HyperGraphElement* element, 
+
+   HyperGraphElementAction* EdgeSE2MixtureDrawAction::operator()(HyperGraph::HyperGraphElement* element,
                HyperGraphElementAction::Parameters* params_){
     if (typeid(*element).name()!=_typeName)
       return 0;
@@ -228,32 +221,13 @@ EdgeSE2* EdgeSE2Mixture::getComponent(int i)
     refreshPropertyPtrs(params_);
     if (! _previousParams)
       return this;
-    
+
     if (_show && !_show->value())
       return this;
 
-//     EdgeSE2Mixture* e =  static_cast<EdgeSE2Mixture*>(element);
-//     VertexSE2* fromEdge = static_cast<VertexSE2*>(e->vertex(0));
-//     VertexSE2* toEdge   = static_cast<VertexSE2*>(e->vertex(1));
-//     //glColor3f(0.5f,0.5f,0.8f);
-//     if(e->numberComponents==2){
-//     if(e->getBestComponent()==0)//accepted 
-//       glColor3f(0.5f,0.0f,0.0f);
-//     else//rejected 
-//       glColor3f(1.0f,0.8f,0.8f);
-//     }
-//     glPushAttrib(GL_ENABLE_BIT);
-//     glDisable(GL_LIGHTING);
-//     glBegin(GL_LINES);
-//     glVertex3f((float)fromEdge->estimate().translation().x(),(float)fromEdge->estimate().translation().y(),0.f);
-//     glVertex3f((float)toEdge->estimate().translation().x(),(float)toEdge->estimate().translation().y(),0.f);
-//     glEnd();
-//     glPopAttrib();
-//     return this;
-    
-        glPushAttrib(GL_ENABLE_BIT);
+    glPushAttrib(GL_ENABLE_BIT);
     glDisable(GL_LIGHTING);
-    
+
     EdgeSE2Mixture* e =  static_cast<EdgeSE2Mixture*>(element);
 
 
@@ -262,41 +236,27 @@ EdgeSE2* EdgeSE2Mixture::getComponent(int i)
       //BEST EDGE
       VertexSE2* fromEdge = static_cast<VertexSE2*>(e->vertex(0));
       VertexSE2* toEdge   = static_cast<VertexSE2*>(e->vertex(1));
-      glColor3f(0.8f,0.0f,1.0f);
+      glColor3f(1.0f,1.0f,0.0f);
       glVertex3f((float)fromEdge->estimate().translation().x(),(float)fromEdge->estimate().translation().y(),0.f);
-      glVertex3f((float)toEdge->estimate().translation().x(),(float)toEdge->estimate().translation().y(),0.f);            
-      
-//       for(unsigned int i=0;i<e->numberComponents;++i){
-// 	if(i==e->getBestComponent())
-// 	  continue;
-// 	VertexSE2* fromEdge = static_cast<VertexSE2*>(e->getComponent(i)->vertex(0));
-// 	VertexSE2* toEdge   = static_cast<VertexSE2*>(e->getComponent(i)->vertex(1));
-// 	if(fromEdge && toEdge){
-// 	  glColor3f(1.0f,0.8f,1.0f);//rejected edges
-// 	  glVertex3f((float)fromEdge->estimate().translation().x(),(float)fromEdge->estimate().translation().y(),0.f);
-// 	  glVertex3f((float)toEdge->estimate().translation().x(),(float)toEdge->estimate().translation().y(),0.f);            
-// 	}
-//       }
-     }
+      glVertex3f((float)toEdge->estimate().translation().x(),(float)toEdge->estimate().translation().y(),0.f);
+
+    }
     else{
       if(e->getBestComponent()==0)
-	glColor3f(0.8f,0.0f,1.0f);
+        glColor3f(1.0f,1.0f,0.0f);
       else
-	glColor3f(1.0f,0.8f,1.0f);
-      
+        glColor3f(1.0f,1.0,0.0f);
+
       VertexSE2* fromEdge = static_cast<VertexSE2*>(e->vertex(0));
       VertexSE2* toEdge   = static_cast<VertexSE2*>(e->vertex(1));
-      
+
       glVertex3f((float)fromEdge->estimate().translation().x(),(float)fromEdge->estimate().translation().y(),0.f);
-      glVertex3f((float)toEdge->estimate().translation().x(),(float)toEdge->estimate().translation().y(),0.f);            
+      glVertex3f((float)toEdge->estimate().translation().x(),(float)toEdge->estimate().translation().y(),0.f);
     }
-    
+
     glEnd();
     glPopAttrib();
     return this;
-    
+
   }
   #endif
-
-
-

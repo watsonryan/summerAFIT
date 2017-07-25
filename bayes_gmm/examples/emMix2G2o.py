@@ -72,14 +72,10 @@ def main(argv):
   np.savetxt( 'residuals.txt', residuals)
   D = min( residuals.shape )
   # Intialize prior
-  m_0 = np.mean(residuals,axis=0)
+  m_0 = np.zeros(D)
+  S_0 = np.array([ [0.02,0,0],[0,0.02,0],[0,0,0.01] ])
   k_0 = 1.
   v_0 = D + 3
-  covar_scale = 1.
-#  v_0 = 3. * np.sqrt( np.std( residuals, axis=0 ) )
-  S_0 = covar_scale**2*v_0*np.eye(D)
-#  S_0 = np.array([ [0.02,0,0],[0,0.02,0],[0,0,0.01] ])
-# S_0 = np.array([ [0.02,0,0],[0,0.02,0],[0,0,0.01] ] )
   prior = NIW(m_0, k_0, v_0, S_0)
 
   # Setup IGMM
@@ -102,18 +98,7 @@ def main(argv):
     mixTmp = np.array([mixTmp[0][0],mixTmp[0][1],mixTmp[0][2],mixTmp[0][4],mixTmp[0][5],mixTmp[0][8]])
     mixInv =  np.vstack( [mixInv, mixTmp] )
 
-  count = 0
-  outKey = []
-  residuals = np.loadtxt('residuals.txt')
-  keys = np.loadtxt('factor.keys')
-  for lines in residuals:
-    rsos = np.inner( residuals[count], residuals[count] )
-    if (rsos > 0.0):
-      outKey.append(keys[count])
-    count = count + 1
-  outKey = [map(int, x) for x in outKey]
-
-  ##############################################################################
+ ##############################################################################
 
   f = open(args.input,'r')
   g = open(args.out,'w')
@@ -121,7 +106,6 @@ def main(argv):
   for lines in f:
     splitLine = lines.split()
     if splitLine[0] == "EDGE_SE2":
-#      if outKey[count][0] == int(splitLine[1]) and outKey[count][1] == int(splitLine[2]):
       count = count + 1
       index = splitLine[1:3]
       meas = splitLine[3:6]
@@ -133,15 +117,15 @@ def main(argv):
       splitLine[8:10] = meas
       splitLine[11:20] = map(str, mixInv[0])
       for x in range(1, k+1):
+        const = 1./( 10**(8*x) )
+        diff = mixture[0].reshape(3,3) - mixture[x].reshape(3,3)
         splitLine.append("EDGE_SE2")
-        splitLine.append( str( 1e-5*( 1. / np.linalg.norm( mixInv[0] -  mixInv[x] ) ) ) )
+#        splitLine.append( str( const*( 1. / np.linalg.norm( mixInv[0] -  mixInv[x] ) ) ) )
+        splitLine.append( str(const * 1. / np.trace( np.transpose(diff) * diff ) ) )
         splitLine.append( ' '.join(index) )
         splitLine.append( ' '.join(meas) )
-        splitLine.append( ' '.join( map(str, 1e-5 * mixInv[x]) ) )
+        splitLine.append( ' '.join( map(str,const*mixInv[x]) ) )
       g.write(' '.join(splitLine)+ '\n')
-#      else:
-#        splitLine[6:12] = map(str, mixInv[0])
-#        g.write(' '.join(splitLine) + '\n')
     else:
       g.write(' '.join(splitLine) + '\n')
   f.close()
