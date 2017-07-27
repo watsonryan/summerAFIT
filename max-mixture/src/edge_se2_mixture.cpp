@@ -230,22 +230,25 @@ EdgeSE2* EdgeSE2Mixture::getComponent(int i)
 
     EdgeSE2Mixture* e =  static_cast<EdgeSE2Mixture*>(element);
 
-
     glBegin(GL_LINES);
     if(e->numberComponents>2){
       //BEST EDGE
       VertexSE2* fromEdge = static_cast<VertexSE2*>(e->vertex(0));
       VertexSE2* toEdge   = static_cast<VertexSE2*>(e->vertex(1));
-      glColor3f(1.0f,1.0f,0.0f);
+      if(e->getBestComponent()==0)
+        glColor3f(1.0f,1.0f,0.0f);
+      else if(e->getBestComponent()==1)
+        glColor3f(0.0f,0.0f,0.0f);
+      else
+        glColor3f(1.0f,0.0f,0.0f);
       glVertex3f((float)fromEdge->estimate().translation().x(),(float)fromEdge->estimate().translation().y(),0.f);
       glVertex3f((float)toEdge->estimate().translation().x(),(float)toEdge->estimate().translation().y(),0.f);
-
     }
     else{
       if(e->getBestComponent()==0)
         glColor3f(1.0f,1.0f,0.0f);
       else
-        glColor3f(1.0f,1.0,0.0f);
+        glColor3f(1.0f,1.0f,0.0f);
 
       VertexSE2* fromEdge = static_cast<VertexSE2*>(e->vertex(0));
       VertexSE2* toEdge   = static_cast<VertexSE2*>(e->vertex(1));

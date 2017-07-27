@@ -117,11 +117,10 @@ def main(argv):
       splitLine[8:10] = meas
       splitLine[11:20] = map(str, mixInv[0])
       for x in range(1, k+1):
-        const = 1./( 10**(8*x) )
+        const = 1./( 10**(6) )
         diff = mixture[0].reshape(3,3) - mixture[x].reshape(3,3)
         splitLine.append("EDGE_SE2")
-#        splitLine.append( str( const*( 1. / np.linalg.norm( mixInv[0] -  mixInv[x] ) ) ) )
-        splitLine.append( str(const * 1. / np.trace( np.transpose(diff) * diff ) ) )
+        splitLine.append( str( const*( 1. / np.linalg.norm( mixInv[0] -  mixInv[x] ) ) ) )
         splitLine.append( ' '.join(index) )
         splitLine.append( ' '.join(meas) )
         splitLine.append( ' '.join( map(str,const*mixInv[x]) ) )

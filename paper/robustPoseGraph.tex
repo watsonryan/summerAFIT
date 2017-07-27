@@ -1,4 +1,4 @@
- \documentclass[ugly]{ion}
+ \documentclass{IEEEtran}
  \usepackage{mathtools}
  \usepackage{graphicx}
  \graphicspath{ {figures/} }
@@ -8,7 +8,7 @@
 \usepackage{float}
  \usepackage{textcomp}
 \begin{document}
-\title{Robust Incremental Pose-Graph Optimization Using Bayesian Mixture Model \\ }
+\title{Robust Pose Graph Optimization With Accurate Covariance Recovery \\ }
 \author{Ryan M. Watson , { \it West Virginia University} \\   
 		Clark N.Taylor , {\it Air Force Research Laboratory} \\ 
 	    Robert C. Leishman , {\it Air Force Institute Of Technology} }
@@ -17,32 +17,43 @@
 
 \begin{abstract}
  
+``	To be uncertain is to be uncomfortable, but to be certain is to be ridiculous. '' \footnote{Generally attributed to Johann Wolfgang von Goethe} This quote ---  although somewhat hyperbolically --- describes one of the paramount concerns within the field of robust pose graph optimization. That is, how do we recover an accurate covariance estimate from a pose graph that may contain false constraints? Previously developed methods of robust pose graph optimization mitigate the affect of an erroneous constraint by scaling the corresponding elements of the covariance and information matrices; however, none of the proposed methods do so in such a way that maintains the accuracy of the covariance estimate. To overcome this issue, we propose a method that utilizes expectation maximization as a soft clustering algorithm to iteratively estimate the inlier/outliers covariance matrices. The estimated covariance is then used within the max-mixtures framework to mitigate the affect of false constraints. This method provides robust optimization in the face of faulty pose graphs while providing an accurate covariance estimate.
+ 
 \end{abstract}
 
 \section{Introduction}
+
 \subsection{Background and Motivation}
 
+	\subsubsection{Traditional M-Estimator}
 
-\subsection{Previous Works}
+	\subsubsection{Switchable Constraints}
 
-	\begin{itemize}
-		\item Traditional M-Estimators
-		\item Switchable Constraints
-		\item Dynamic Covariance Scaling 
-		\item Max-Mixtures
-	\end{itemize}
+	\subsubsection{Dynamic Covariance Scaling}
 
-\subsubsection{Shortcomings of Previous Methods}
+	\subsubsection{Max-Mixtures}	
 
- 
+	\subsubsection{Shortcomings of Previous Methods}
+
+\\ 
+
 \section{Algorithm Formulation}
+
 	\subsection{Factor Graph}
-	\subsection{Incremental Smoothing and Mapping}
-	\subsection{Bayesian Mixture Model With Dirichlet Process}
+
+	\subsection{Factor Graph Optimization}
+
+	\subsection{Expectation Maximization as Soft Clustering Algorithm}
+		
+		\subsubsection{Dirichlet Process}
+
 	\subsection{Max-Mixture Model}
+
+\\
 
 \section{Results}
 
+\\ 
  
 \section{Conclusions and Future Work}
 
