@@ -25,17 +25,22 @@ def generate_clean_graph(nnodes,search_radius):
     graph.add_nodes_from(range(nnodes))
     graph.add_edges_from(list(pairs))
     max_graph = nx.algorithms.clique.make_max_clique_graph( graph )
+    weak_nodes = [node for node,degree in max_graph.degree().items() if degree < 3]
+    max_graph.remove_nodes_from(weak_nodes)
     for n in graph.nodes():
         graph.node[n]['pose'] = pose.values()[n]
     node_pose = nx.get_node_attributes(graph,'pose')
     return max_graph, node_pose
 
 def generate_measurements(graph):
-    for n in graph.nodes():
-        print n
+    #for n in graph.nodes():
+    print graph.node
 
-def print_g2o(graph):
-    print graph.edges()
+def print_g2o(graph,pose):
+    for n in graph.nodes():
+        graph.node[n]['pose'] = pose.values()[n]
+    pose = nx.get_node_attributes(graph,'pose')
+    print pose
 
 def plot_graph(graph,pose):
     nx.draw(graph,pose)
@@ -65,9 +70,9 @@ if __name__=="__main__":
                         help="Use flag if you would like to visualize the graph")
     args = parser.parse_args()
 
-    graph, pose = generate_clean_graph(args.nnodes,args.radius)
+    clean_graph, clean_pose = generate_clean_graph(args.nnodes,args.radius)
     #noisy_pose = generate_noisy_pose(pose, [0,0], [0.1,0.25])
-    print_g2o(graph)
-    #generate_measurements(graph, pose)
+    print_g2o(clean_graph, clean_pose)
+    #generate_measurements(clean_graph)
     if args.plot:
-        plot_graph(graph,pose)
+        plot_graph(clean_graph,clean_pose)
