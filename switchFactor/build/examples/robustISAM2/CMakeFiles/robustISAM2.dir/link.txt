@@ -1,1 +1,0 @@
-/usr/bin/c++   -O3 -DNDEBUG -mfpmath=sse -msse3 -fPIC -O3 -DNDEBUG   CMakeFiles/robustISAM2.dir/robustISAM2.cpp.o  -o ../../../examples/robustISAM2/robustISAM2 -rdynamic ../../../lib/libvertigo-gtsam.so /usr/local/lib/libgtsam.so -lboost_program_options -Wl,-rpath,/home/rmwafit/Documents/git/summerAFIT/switchFactor/lib:/usr/local/lib 

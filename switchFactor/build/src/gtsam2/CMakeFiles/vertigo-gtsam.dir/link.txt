@@ -1,1 +1,0 @@
-/usr/bin/c++  -fPIC -O3 -DNDEBUG -mfpmath=sse -msse3 -fPIC -O3 -DNDEBUG  -shared -Wl,-soname,libvertigo-gtsam.so -o ../../../lib/libvertigo-gtsam.so CMakeFiles/vertigo-gtsam.dir/__/timer.cpp.o CMakeFiles/vertigo-gtsam.dir/betweenFactorSwitchable.cpp.o /usr/local/lib/libgtsam.so -Wl,-rpath,/usr/local/lib: 

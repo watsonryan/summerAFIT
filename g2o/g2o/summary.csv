@@ -1,0 +1,2 @@
+edge_types, filename, final_chi, init_chi, load_chi, maxIterations, n_edges, n_landmarks, n_poses, n_vertices, realIterations, robustKernel, solver, 
+EDGE_SE2 , ../../poseGraphs/manhattanOlson3500.g2o, 146.077, 69142.9, 69142.9, 5, 5598, 0, 3500, 3500, 5, 0, gn_var, 

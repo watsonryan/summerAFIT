@@ -90,7 +90,8 @@ void EdgeSE2Mixture::computeError()
 
   bestComponent = best;
   UpdateBelief(bestComponent);
-  cout << "\nBest component is "<<bestComponent<<"\n";
+  // Uncomment to print best fit component 
+  // cout << "\nBest component is "<<bestComponent<<"\n";  
 
   //this will be used by the optimizer
   g2o::EdgeSE2::computeError();
