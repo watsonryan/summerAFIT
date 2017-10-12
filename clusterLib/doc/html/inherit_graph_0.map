@@ -1,6 +1,0 @@
-<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="node1" href="$classdistributions_1_1_cluster_dist.html" title="To make a new cluster distribution class that will work with the algorithm templates your class must ..." alt="" coords="5,56,184,83"/>
-<area shape="rect" id="node2" href="$classdistributions_1_1_exp_gamma.html" title="Exponential&#45;Gamma parameter distribution for Exponential clusters. " alt="" coords="239,5,421,32"/>
-<area shape="rect" id="node3" href="$classdistributions_1_1_gauss_wish.html" title="Gaussian&#45;Wishart parameter distribution for full Gaussian clusters. " alt="" coords="241,56,419,83"/>
-<area shape="rect" id="node4" href="$classdistributions_1_1_norm_gamma.html" title="Normal&#45;Gamma parameter distribution for diagonal Gaussian clusters. " alt="" coords="232,107,428,133"/>
-</map>

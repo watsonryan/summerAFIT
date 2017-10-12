@@ -1,5 +1,0 @@
-namespace robust_gtsam
-{
-
-
-}

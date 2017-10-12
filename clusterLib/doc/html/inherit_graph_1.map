@@ -1,6 +1,0 @@
-<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="node1" href="$classdistributions_1_1_weight_dist.html" title="To make a new weight class that will work with the algorithm templates, your class must have this as ..." alt="" coords="5,31,180,57"/>
-<area shape="rect" id="node2" href="$classdistributions_1_1_dirichlet.html" title="Dirichlet parameter distribution. " alt="" coords="236,5,396,32"/>
-<area shape="rect" id="node3" href="$classdistributions_1_1_stick_break.html" title="Stick&#45;Breaking (Dirichlet Process) parameter distribution. " alt="" coords="228,56,404,83"/>
-<area shape="rect" id="node4" href="$classdistributions_1_1_g_dirichlet.html" title="Generalised Dirichlet parameter distribution (truncated stick breaking). " alt="" coords="452,56,623,83"/>
-</map>
